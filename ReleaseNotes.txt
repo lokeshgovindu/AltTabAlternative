@@ -1,0 +1,37 @@
+Known Limitations
+-----------------
+- Not handled Alt+Ctrl+Tab
+- Not handled Alt+Esc
+
+
+Known Issues
+------------
+- Process is terminated on pressing Del key instead of default action on that
+  window. Ex: Skype, Cicso Jabber.
+
+
+2016.2 new features and bug fixes
+---------------------------------
++ Provided configuration/setting INI file & UI.
+  a. Now user can configure font style of SearchString, ListView and its
+     background color.
+  b. Prompts for confirmation before terminating all processes.
+  c. Window Transparency.
+  d. Window Width & Window Height Maximum percentage wrt screen resolution.
+
+
+2016.1 new features and bug fixes
+---------------------------------
++ Run at startup.
++ Added enable/disable toggle menu to turn on/off AltTabAlternative Hotkeys.
+- Fixed ListView refresh/update issue with new windows list if any process is
+  created or terminated when key Delete pressed/with any other reason.
+- Fixed Window title for the **file properties** window.
+- Terminate all processes using key NumpadDiv (/), hold Shift to terminate
+  forcefully.
+
+
+PS
+--
+'+' : indicates new feature
+'-' : indicates bug fixed

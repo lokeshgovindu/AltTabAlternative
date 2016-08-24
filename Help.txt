@@ -1,0 +1,90 @@
+o-----------------------------------------------------------------------------o
+| Alt+Tab Alternative                                                         |
+|                                                                             |
+| Details:                                                                    |
+| --------                                                                    |
+| Use Alt+Tab / Alt+Shift+Tab to bring the main AltTab window, use            |
+|        Tab key to select next row                                           |
+|  Shift+Tab key to select previous row                                       |
+|                                                                             |
+x-----------------------------------------------------------------------------x
+| Keys                 | Description                                          |
+|----------------------+------------------------------------------------------|
+| Home/PageUp          | Move selection to first row                          |
+| End/PageDown         | Move selection to last row                           |
+| Up                   | Move selection to previous row                       |
+| Down                 | Move selection to next row                           |
+|----------------------+------------------------------------------------------|
+| Del                  | Terminate currently selected process                 |
+| Shift+Del            | Forcefully terminate currently selected process      |
+|----------------------+------------------------------------------------------|
+| NumpadDiv (/)        | Terminate all processes                              |
+| Shift+NumpadDiv (/)  | Terminate all processes forcefully                   |
+|----------------------+------------------------------------------------------|
+| AlphaNumeric         | Filter windows while typing, can delete last typed   |
+|                      | char using backspace.                                |
+|                      | Search string is displayed on static control.        |
+|----------------------+------------------------------------------------------|
+| F1 (FunctionKey)     | Display help file in viewer.                         |
+| F2 (FunctionKey)     | Display settings dialog.                             |
+x-----------------------------------------------------------------------------x
+|                                                                             |
+|                                                                             |
+| Tray Menu                                                                   |
+| ---------                                                                   |
+|                                                                             |
+| +---------------+                                                           |
+| | About         | - Displays AboutDialog                                    |
+| |---------------|                                                           |
+| | ReadMe        | - Displays ReadMe File                                    |
+| | Help          | - Displays Help File                                      |
+| | Release Notes | - Displays Release Notes File                             |
+| |---------------|                                                           |
+| | Settings      | - Settings Dialog                                         |
+| | Disable       | - Disable AltTabAlternative until enable it again         |
+| | Run at statup | - Run at startup                                          |
+| |---------------|                                                           |
+| | Exit          | - Exit Application                                        |
+| +---------------+                                                           |
+|                                                                             |
+|                                                                             |
+| Configuration INF File                                                      |
+| ----------------------                                                      |
+| Used to read/write the settings of application.                             |
+|                                                                             |
+|                                                                             |
+| Settings Dialog                                                             |
+| ---------------                                                             |
+|                                                                             |
+x-----------------------------------------------------------------------------x
+| Setting              | Description                                          |
+|----------------------+------------------------------------------------------|
+| SearchString Font    | Font (name, size, color & style) details of          |
+|                      | SearchString control.                                |
+|----------------------+------------------------------------------------------|
+| ListView Font        | Font (name, size, color, background color & style)   |
+|                      | of ListView control.                                 |
+|----------------------+------------------------------------------------------|
+| PromptTerminateAll   | Prompts for confirmation before terminating.         |
+|----------------------+------------------------------------------------------|
+| Window Transparency  | Indicate the degree of transparency.                 |
+|                      |   0 makes the window invisible.                      |
+|                      | 255 makes it opaque.                                 |
+|----------------------+------------------------------------------------------|
+| Window Width (%)     | Main window width wrt percentage of screen width.    |
+|----------------------+------------------------------------------------------|
+| Window Height Max (%)| Main window maximum height wrt percentage of screen  |
+|                      |   height.                                            |
+|                      |                                                      |
+|                      | If there are more number of processes which exceeds  |
+|                      |   the WindowHeightMax to accommodate all the tasks   |
+|                      |   then resize the window to WindowHeightMax according|
+|                      |   scroll bar presense.                               |
+x-----------------------------------------------------------------------------x
+|                                                                             |
+|                                                                             |
+| Other Details:                                                              |
+| --------------                                                              |
+| - Coming soon...                                                            |
+|                                                                             |
+o-----------------------------------------------------------------------------o
