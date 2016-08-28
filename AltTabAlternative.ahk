@@ -548,7 +548,7 @@ DisplayList:
                     } else {
                         GetWindowIcon(windowID, UseLargeIconsCurrent)          ; (window id, whether to get large icons)
                     }
-                    PrintKV3("WindowID", windowID, "OwnerID", ownerID, "title", title)
+                    ;~ PrintKV3("WindowID", windowID, "OwnerID", ownerID, "title", title)
                     ; Use windowID to activate window, ownerID to terminate window
                     WindowStoreAttributes(Window_Found_Count, windowID, ownerID)  ; Index, wid, parent (or blank if none)
                     LV_Add("Icon" . Window_Found_Count, "", Window_Found_Count, title, procName)
@@ -1336,7 +1336,13 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
             WinGet, ownerES, ExStyle, ahk_id %ownerID%
             
             isAltTabWindow := false
-            If (windowES && !((windowES & WS_EX_TOOLWINDOW) && !(windowES & WS_EX_APPWINDOW)) && !IsInvisibleWin10BackgroundAppWindow(windowID)) {
+            if (ownerES && !((ownerES & WS_EX_TOOLWINDOW) && !(ownerES & WS_EX_APPWINDOW)) && !IsInvisibleWin10BackgroundAppWindow(ownerID)) {
+                isAltTabWindow := true
+                WinGetTitle, ownerTitle, ahk_id %ownerID%
+                ;~ PrintKV("Title", OwnerTitle)
+                title := OwnerTitle
+            }
+            else if (windowES && !((windowES & WS_EX_TOOLWINDOW) && !(windowES & WS_EX_APPWINDOW)) && !IsInvisibleWin10BackgroundAppWindow(windowID)) {
                 isAltTabWindow := true
                 WinGetTitle, windowTitle, ahk_id %windowID%
                 if (windowTitle = "") {
@@ -1344,12 +1350,6 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
                 }
                 title := WindowTitle
                 ;~ PrintKV("Title", WindowTitle)
-            }
-            else If (ownerES && !((ownerES & WS_EX_TOOLWINDOW) && !(ownerES & WS_EX_APPWINDOW)) && !IsInvisibleWin10BackgroundAppWindow(ownerID)) {
-                isAltTabWindow := true
-                WinGetTitle, ownerTitle, ahk_id %ownerID%
-                ;~ PrintKV("Title", OwnerTitle)
-                title := OwnerTitle
             }
 
             if (isAltTabWindow)
