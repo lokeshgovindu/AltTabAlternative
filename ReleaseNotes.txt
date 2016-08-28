@@ -1,7 +1,6 @@
 Known Limitations
 -----------------
 - Not handled Alt+Ctrl+Tab
-- Not handled Alt+Esc
 
 
 Known Issues
@@ -18,6 +17,9 @@ Known Issues
   b. Prompts for confirmation before terminating all processes.
   c. Window Transparency.
   d. Window Width & Window Height Maximum percentage wrt screen resolution.
++ Handled Alt+Esc.
++ Settings go to AppData folder and can export settings to external file.
+- Display proper window icon for most of the windows.
 
 
 2016.1 new features and bug fixes

@@ -46,7 +46,6 @@ AltTabAlternative support:
 Known Limitations
 -----------------
 - Not handled Alt+Ctrl+Tab
-- Not handled Alt+Esc
 
 
 Known Issues

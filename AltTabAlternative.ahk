@@ -31,11 +31,14 @@ WM_KEYUP   := 0x101
 ; Product Information 
 ; -----------------------------------------------------------------------------
 
-SettingsINIFile         := "AltTabAlternativeSettings.ini"
 ProductPage 	        := "http://alttabalternative.sourceforge.net/"
 AuthorName 		        := "Lokesh Govindu"
 AuthorPage 		        := "http://lokeshgovindu.blogspot.in/"
 AboutDialogText	         = AltTabAlternative is a small application created in <a href=`"https://autohotkey.com/`">AutoHotkey</a>, an alternative for windows native Alt+Tab switcher.
+
+SettingsDirPath         := A_AppData . "\" . ProductName
+SettingsINIFileName     := "AltTabAlternativeSettings.ini"
+SettingsINIFilePath     := SettingsDirPath . "\" . SettingsINIFileName
 
 TrayIcon                := "AltTabAlternative.ico"
 ApplicationName         := ProductName
@@ -270,6 +273,7 @@ Return
 ToggleHotkeys(state)    ; (state = "On" or "Off")
 {
     Global
+    PrintSub("ToggleHotkeys")
     PrintKV("ToggleHotkeys: state", state)
     if (state = "on") {
         Print("state = on")
@@ -287,27 +291,20 @@ ToggleHotkeys(state)    ; (state = "On" or "Off")
 }
 
 
-; -----------------------------------------------------------------------------
-; Toggle ContextSensitive Hotkeys
-; Enabled only when the AltTabAlternative window is visible.
-; -----------------------------------------------------------------------------
-ToggleContextSensitiveHotkeys(state)    ; (state = "On" or "Off")
+ToggleAltEscHotkey(state)    ; (state = "On" or "Off")
 {
     Global
-    PrintKV("ToggleContextSensitiveHotkeys: state", state)
+    PrintKV("ToggleAltEscHotkey: state", state)
     if (state = "on") {
         Print("state = on")
-        CSHotKeysDisabled := false
     } else if (state = "off") {
         Print("state = off")
-        CSHotkeysDisabled := true
     } else {
         Print("Unknown state")
         return
     }   
 
-    Hotkey, %AltHotkey%%HelpHotKey%, HelpHotkeyHandler, %state% UseErrorLevel
-    Hotkey, %AltHotkey%%SettingsHotKey%, SettingsHotkeyHandler, %state% UseErrorLevel
+    Hotkey, %AltHotkey%%EscHotkey%, AltEsc, %state% UseErrorLevel
 }
 
 
@@ -361,7 +358,7 @@ AltTabCommonFunction(direction)
         Gosub, DisplayList
         Gosub, GuiResizeAndPosition
         Gosub, ShowWindow
-        ;~ ToggleContextSensitiveHotkeys("On")
+        ToggleAltEscHotkey("On")
     }
 
     ; Check for Alt Up 
@@ -408,7 +405,7 @@ Return
 ; Initialize the settings to defaults
 ; -----------------------------------------------------------------------------
 InitializeDefaults:
-    Print("InitializeDefaults")
+    PrintSub("InitializeDefaults")
     NewSearchString     := ""
     CurSearchString     := ""
     SelectedRowNumber   := 1
@@ -417,6 +414,7 @@ InitializeDefaults:
     NumberBtnDown       := false
     NumberBtnValue      := -1
     ActivateWindow      := false
+    AltEscPressed       := 0
     ; -----------------------------------------------------------------------------
     ; Need to compute the WindowWidth & WindowHeightMax to display
     ; the AltTabAlternative window with changes without restarting
@@ -503,28 +501,40 @@ DisplayList:
     ImageListID1 := IL_Create(10, 5, UseLargeIconsCurrent) ; Create an ImageList so that the ListView can display some icons
     LV_SetImageList(ImageListID1, 1)    ; Attach the ImageLists to the ListView so that it can later display the icons
     
-    WinGet, windowList, List ; gather a list of running programs
+    WinGet, windowList, list, , , Program Manager   ; gather a list of running programs
     Loop, %windowList%
     {
         ownerID := windowID := windowList%A_Index%
-        
-        ; Gets blank title If you try to get it after the Loop, so get & store it even it
-        ;   is not required now.
-        WinGetTitle, title, ahk_id %ownerID%
-        ;~ FileAppend, windowTitle = [%windowTitle%]`n, *
-        
+
         Loop {
             ownerID := DecimalToHex(DllCall("GetWindow", "UInt", ownerID, "UInt", GW_OWNER))
         } Until !DecimalToHex(DllCall("GetWindow", "UInt", ownerID, "UInt", GW_OWNER))
         
         ownerID := ownerID ? ownerID : windowID
-        If (DecimalToHex(DllCall("GetLastActivePopup", "UInt", ownerID)) = windowID) {
-            WinGet, es, ExStyle, ahk_id %windowID%
-            WinGetTitle, windowTitle, ahk_id %windowID%
-            ;~ FileAppend, windowTitle = [%windowTitle%]`n, *
-            If (!((es & WS_EX_TOOLWINDOW) && !(es & WS_EX_APPWINDOW)) &&
-                !IsInvisibleWin10BackgroundAppWindow(windowID))
-            {
+        
+        If (DecimalToHex(DllCall("GetLastActivePopup", "UInt", ownerID)) = windowID)
+        {
+            WinGet, windowES, ExStyle, ahk_id %windowID%
+            WinGet, ownerES, ExStyle, ahk_id %ownerID%
+
+            isAltTabWindow := false
+            if (ownerES && !((ownerES & WS_EX_TOOLWINDOW) && !(ownerES & WS_EX_APPWINDOW)) && !IsInvisibleWin10BackgroundAppWindow(ownerID)) {
+                isAltTabWindow := true
+                WinGetTitle, ownerTitle, ahk_id %ownerID%
+                ;~ PrintKV("Title", OwnerTitle)
+                title := OwnerTitle
+            }
+            else if (windowES && !((windowES & WS_EX_TOOLWINDOW) && !(windowES & WS_EX_APPWINDOW)) && !IsInvisibleWin10BackgroundAppWindow(windowID)) {
+                isAltTabWindow := true
+                WinGetTitle, windowTitle, ahk_id %windowID%
+                if (windowTitle = "") {
+                    WinGetTitle, windowTitle, ahk_id %ownerID%
+                }
+                title := WindowTitle
+                ;~ PrintKV("Title", WindowTitle)
+            }
+            
+            if (isAltTabWindow) {
                 WinGet, procPath, ProcessPath, ahk_id %windowID%
                 WinGet, procName, ProcessName, ahk_id %windowID%
                 
@@ -533,18 +543,19 @@ DisplayList:
                 If (InStr(title, CurSearchString, false) != 0 or InStr(procName, CurSearchString, false) != 0)
                 {
                     Window_Found_Count += 1
-                    GetWindowIcon(windowID, UseLargeIconsCurrent)          ; (window id, whether to get large icons)
-                    WindowStoreAttributes(Window_Found_Count, windowID, "")  ; Index, wid, parent (or blank if none)
+                    if (ownerES) {
+                        GetWindowIcon(ownerID, UseLargeIconsCurrent)          ; (window id, whether to get large icons)
+                    } else {
+                        GetWindowIcon(windowID, UseLargeIconsCurrent)          ; (window id, whether to get large icons)
+                    }
+                    PrintKV3("WindowID", windowID, "OwnerID", ownerID, "title", title)
+                    ; Use windowID to activate window, ownerID to terminate window
+                    WindowStoreAttributes(Window_Found_Count, windowID, ownerID)  ; Index, wid, parent (or blank if none)
                     LV_Add("Icon" . Window_Found_Count, "", Window_Found_Count, title, procName)
                 }
             }
         }
     }
-
-	; HANDLE WM_KEYDOWN EVENT TO SELECT THE ITEMS OF LISTBOX USING UP / DOWN KEYS FROM
-	; FILENAME EDIT CONTROL
-	;~ OnMessage(WM_KEYDOWN, "OnKeyDown")
-	;~ OnMessage(WM_KEYUP,   "OnKeyUp")
 
     GuiControl, +Redraw, ListView1
     ;~ PrintKV("[DisplayList] SelectedRowNumber", SelectedRowNumber)
@@ -553,57 +564,6 @@ DisplayList:
 
     ; TURN ON INCREMENTAL SEARCH
     SetTimer, tIncrementalSearch, 500
-Return
-
-
-; -----------------------------------------------------------------------------
-; This is not used anywhere, to be deleted
-; -----------------------------------------------------------------------------
-ConstructWindowsList:
-    PrintSub("ConstructWindowsList")
-    windowList =
-    Window_Found_Count := 0
-    
-    DetectHiddenWindows, Off ; makes DllCall("IsWindowVisible") unnecessary
-    
-    ImageListID1 := IL_Create(10, 5, UseLargeIconsCurrent) ; Create an ImageList so that the ListView can display some icons
-    LV_SetImageList(ImageListID1, 1)    ; Attach the ImageLists to the ListView so that it can later display the icons
-    
-    WinGet, windowList, List ; gather a list of running programs
-    Loop, %windowList%
-    {
-        ownerID := windowID := windowList%A_Index%
-        
-        Loop {
-            ownerID := DecimalToHex(DllCall("GetWindow", "UInt", ownerID, "UInt", GW_OWNER))
-        } Until !DecimalToHex(DllCall("GetWindow", "UInt", ownerID, "UInt", GW_OWNER))
-        
-        ownerID := ownerID ? ownerID : windowID
-        If (DecimalToHex(DllCall("GetLastActivePopup", "UInt", ownerID)) = windowID) {
-            WinGet, es, ExStyle, ahk_id %windowID%
-            WinGetTitle, windowTitle, ahk_id %windowID%
-            ;~ FileAppend, windowTitle = [%windowTitle%]`n, *
-            If (!((es & WS_EX_TOOLWINDOW) && !(es & WS_EX_APPWINDOW)) &&
-                !IsInvisibleWin10BackgroundAppWindow(windowID))
-            {
-                ;~ FileAppend, windowTitle = [%windowTitle%]`n, *
-                WinGetTitle, title, ahk_id %ownerID%
-                WinGet, procPath, ProcessPath, ahk_id %windowID%
-                WinGet, procName, ProcessName, ahk_id %windowID%
-                
-                ;~ FileAppend, A_Index = [%A_Index%] title = [%title%]`, processName = [%procName%]`n, *
-                ;~ Print("CurSearchString = " . CurSearchString)
-                If (InStr(title, CurSearchString, false) != 0 or InStr(procName, CurSearchString, false) != 0)
-                {
-                    Window_Found_Count += 1
-                    GetWindowIcon(windowID, UseLargeIconsCurrent)          ; (window id, whether to get large icons)
-                    WindowStoreAttributes(Window_Found_Count, windowID, "")  ; Index, wid, parent (or blank if none)
-                    ;~ LV_Add("Icon" . Window_Found_Count, "", Window_Found_Count, title, procName)
-                }
-            }
-        }
-    }
-    PrintKV("Window_Found_Count", Window_Found_Count)
 Return
 
 
@@ -723,10 +683,14 @@ ListViewEvent:
             GetSelectedRowInfo()
             Print("[A_GuiEvent] SelectedRowNumber = " . SelectedRowNumber)
             windowID := Window%SelectedRowNumber%
+            ownerID := WindowParent%SelectedRowNumber%
             exeName := Exe_Name%SelectedRowNumber%
+            procID := PID%SelectedRowNumber%
             Print("   windowID = " . windowID)
+            Print("    ownerID = " . ownerID)
             Print("windowTitle = " . WindowTitle%SelectedRowNumber%)
             Print("    exeName = " . exeName)
+            Print("     procID = " . procID)
             explorerName = "explorer.exe"
             
             ; Focus will be lost from Alt+Tab main window and it may ask to save data
@@ -742,8 +706,10 @@ ListViewEvent:
                 RunWait, %KillCmd%, , Hide
             }
             else {
+                ; User ownerID to terminate window, otherwise topmost popwindow will be
+                ; closed instead of process/main window.
                 Print("NumpadDel pressed")
-                WinClose, ahk_id %windowID%
+                WinClose, ahk_id %ownerID%
                 Sleep, 50
             }
 
@@ -753,10 +719,6 @@ ListViewEvent:
                 SelectedRowNumber := Window_Found_Count - 1
             }
 
-            ;~ Gosub, ConstructWindowsList
-            ;~ PrintKV("After ConstructWindowsList Window_Found_Count", Window_Found_Count)
-            ;~ PrintKV("Selecting SelectedRowNumber", SelectedRowNumber)
-            ;~ LV_Modify(SelectedRowNumber, "Select Vis Focus")
             Gosub, DisplayList
             WinActivate, ahk_id %MainWindowHwnd%
             LVE_VkCodePrev := vkCode
@@ -882,11 +844,16 @@ IsSymbol(x) {
 ; -----------------------------------------------------------------------------
 AltTabAlternativeDestroy:
     PrintSub("AltTabAlternativeDestroy Begin")
+    PrintKV("AltTabAlternativeDestroy: ActivateWindow", ActivateWindow)
     Gui, 1: Default
     Gosub, DisableTimers
-    ;~ ToggleContextSensitiveHotkeys("Off")
-    PrintKV("AltTabAlternativeDestroy: ActivateWindow", ActivateWindow)
-    if (ActivateWindow) {
+    ToggleAltEscHotkey("Off")
+    
+    ; First check for AltEsc
+    if (AltEscPressed = 1) {
+        Gui, 1: Destroy
+    }    
+    else if (ActivateWindow) {
         ActivateWindow := false
         GetSelectedRowInfo()
         PrintKV("SelectedRowNumber", SelectedRowNumber)
@@ -895,9 +862,6 @@ AltTabAlternativeDestroy:
         PrintKV("Activating windowTitle", WindowTitle%SelectedRowNumber%)
         Gui, 1: Destroy
         WinActivate, ahk_id %windowID%
-    }
-    else if (AltEscPressed = 0) {
-        Gui, 1: Destroy
     }
     else {
         Gui, 1: Destroy
@@ -930,7 +894,7 @@ GuiCenterX()
 ; -----------------------------------------------------------------------------
 ; Store the windowID, Process Name/Path/ID and etc of the given WindowID.
 ; -----------------------------------------------------------------------------
-WindowStoreAttributes(index, windowsID, ID_Parent) 
+WindowStoreAttributes(index, windowID, ID_Parent) 
 {
     Local State_temp
     ;~ PrintSub("WindowStoreAttributes")
@@ -1345,52 +1309,6 @@ LV_SetSI(hList, iItem, iSubItem, iImage) {
 }
 
 
-; =================================================================================
-; Function: AutoXYWH
-;   Move and resize control automatically when GUI resizes.
-; Parameters:
-;   DimSize - Can be one or more of x/y/w/h  optional followed by a fraction
-;             add a '*' to DimSize to 'MoveDraw' the controls rather then just 'Move', this is recommended for Groupboxes
-;   cList   - variadic list of ControlIDs
-;             ControlID can be a control HWND, associated variable name, ClassNN or displayed text.
-;             The later (displayed text) is possible but not recommend since not very reliable 
-; Examples:
-;   AutoXYWH("xy", "Btn1", "Btn2")
-;   AutoXYWH("w0.5 h 0.75", hEdit, "displayed text", "vLabel", "Button1")
-;   AutoXYWH("*w0.5 h 0.75", hGroupbox1, "GrbChoices")
-; ---------------------------------------------------------------------------------
-; Version: 2015-5-29 / Added 'reset' option (by tmplinshi)
-;          2014-7-03 / toralf
-;          2014-1-2  / tmplinshi
-; requires AHK version : 1.1.13.01+
-; =================================================================================
-AutoXYWH(DimSize, cList*)       ; http://ahkscript.org/boards/viewtopic.php?t=1079
-{
-    static cInfo := {}
-
-    If (DimSize = "reset")
-        Return cInfo := { }
-
-    For i, ctrl in cList {
-        ctrlID := A_Gui ":" ctrl
-        If ( cInfo[ctrlID].x = "" ) {
-            GuiControlGet, i, %A_Gui%:Pos, %ctrl%
-            MMD := InStr(DimSize, "*") ? "MoveDraw" : "Move"
-            fx := fy := fw := fh := 0
-            For i, dim in (a := StrSplit(RegExReplace(DimSize, "i)[^xywh]")))
-                If !RegExMatch(DimSize, "i)" dim "\s*\K[\d.-]+", f%dim%)
-                    f%dim% := 1
-            cInfo[ctrlID] := { x:ix, fx:fx, y:iy, fy:fy, w:iw, fw:fw, h:ih, fh:fh, gw:A_GuiWidth, gh:A_GuiHeight, a:a, m:MMD }
-        }Else If ( cInfo[ctrlID].a.1) {
-            dgx := dgw := A_GuiWidth  - cInfo[ctrlID].gw  , dgy := dgh := A_GuiHeight - cInfo[ctrlID].gh
-            For i, dim in cInfo[ctrlID]["a"]
-            Options .= dim (dg%dim% * cInfo[ctrlID]["f" dim] + cInfo[ctrlID][dim]) A_Space
-            GuiControl, % A_Gui ":" cInfo[ctrlID].m , % ctrl, % Options
-        }
-    }
-}
-
-
 ; -----------------------------------------------------------------------------
 ; Returns the number of windows
 ; -----------------------------------------------------------------------------
@@ -1401,7 +1319,7 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
     
     DetectHiddenWindows, Off ; makes DllCall("IsWindowVisible") unnecessary
     
-    WinGet, windowList, List ; gather a list of running programs
+    WinGet, windowList, list, , , Program Manager   ; gather a list of running programs
     Loop, %windowList%
     {
         ownerID := windowID := windowList%A_Index%
@@ -1409,14 +1327,33 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
         Loop {
             ownerID := DecimalToHex(DllCall("GetWindow", "UInt", ownerID, "UInt", GW_OWNER))
         } Until !DecimalToHex(DllCall("GetWindow", "UInt", ownerID, "UInt", GW_OWNER))
+        
         ownerID := ownerID ? ownerID : windowID
         
-        If (DecimalToHex(DllCall("GetLastActivePopup", "UInt", ownerID)) = windowID) {
-            WinGet, es, ExStyle, ahk_id %windowID%
-            If (!((es & WS_EX_TOOLWINDOW) && !(es & WS_EX_APPWINDOW)) &&
-                !IsInvisibleWin10BackgroundAppWindow(windowID))
+        If (DecimalToHex(DllCall("GetLastActivePopup", "UInt", ownerID)) = windowID)
+        {
+            WinGet, windowES, ExStyle, ahk_id %windowID%
+            WinGet, ownerES, ExStyle, ahk_id %ownerID%
+            
+            isAltTabWindow := false
+            If (windowES && !((windowES & WS_EX_TOOLWINDOW) && !(windowES & WS_EX_APPWINDOW)) && !IsInvisibleWin10BackgroundAppWindow(windowID)) {
+                isAltTabWindow := true
+                WinGetTitle, windowTitle, ahk_id %windowID%
+                if (windowTitle = "") {
+                    WinGetTitle, windowTitle, ahk_id %ownerID%
+                }
+                title := WindowTitle
+                ;~ PrintKV("Title", WindowTitle)
+            }
+            else If (ownerES && !((ownerES & WS_EX_TOOLWINDOW) && !(ownerES & WS_EX_APPWINDOW)) && !IsInvisibleWin10BackgroundAppWindow(ownerID)) {
+                isAltTabWindow := true
+                WinGetTitle, ownerTitle, ahk_id %ownerID%
+                ;~ PrintKV("Title", OwnerTitle)
+                title := OwnerTitle
+            }
+
+            if (isAltTabWindow)
             {
-                WinGetTitle, title, ahk_id %ownerID%
                 WinGet, procName, ProcessName, ahk_id %windowID%
                 
                 ;~ FileAppend, A_Index = [%A_Index%] title = [%title%]`, processName = [%procName%]`n, *
@@ -1471,6 +1408,9 @@ KillProcessForcefully(procID) {
 }
 
 
+; -----------------------------------------------------------------------------
+; Include files
+; -----------------------------------------------------------------------------
 #Include %A_ScriptDir%\CommonUtils.ahk
 #Include %A_ScriptDir%\AboutDialog.ahk
 #Include %A_ScriptDir%\ReadMe.ahk

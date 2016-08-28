@@ -14,7 +14,12 @@ o-----------------------------------------------------------------------------o
 
 ;~ ; This is for my testing
 ;~ If (true) {
-    ;~ SettingsINIFile         := "AltTabAlternativeSettings.ini"
+    ;~ ProductName             := "AltTabAlternative"
+    ;~ SettingsINIFileName         := "AltTabAlternativeSettings.ini"
+    ;~ SettingsDirPath             := A_AppData . "\" . ProductName
+    ;~ SettingsINIFilePath     := SettingsDirPath . "\" . SettingsINIFileName
+    ;~ PrintKV("SettingsDirPath", SettingsDirPath)
+    ;~ PrintKV("SettingsINIFilePath", SettingsINIFilePath)
     ;~ IniFileData("Read")
     ;~ ShowSettingsDialog()
     ;~ Return
@@ -83,8 +88,8 @@ ShowSettingsDialog()
     SearchStringFontStyleIndex := GetFontStyleIndex(SearchStringFontStyle)
     ListViewFontStyleIndex := GetFontStyleIndex(ListViewFontStyle)
 
-    SDWindowWidth 		:= 264
-    SDGroupHeight 		:= 120
+    SDGroupWidth 		:= 264
+    SDGroupHeight 		:= 144
     SDTextCtrlFontSize 	:= 10
     SecondColumnOffset  := 57
     
@@ -92,7 +97,11 @@ ShowSettingsDialog()
     Gui, Margin, 5, 5
 
     ; -----------------------------------------------------------------------------
-    Gui, Add, GroupBox, xm ym Section vSearchStringGroupBox W%SDWindowWidth% H%SDGroupHeight% cBlue, SearchString Font
+    Gui, Add, Text, xm ym+5 vSDStorageText hwndhSDStorageText, Storage:
+    Gui, Add, Edit, x+3 yp-3 w426 vSDStorageEdit hwndhSDStorageEdit ReadOnly -Multi, %SettingsINIFilePath%
+    Gui, Add, Button, x+3 yp-1 w60 vSDExportBtn hwndhSDExportBtn gSDExportBtnHandler, &Export...
+    ; -----------------------------------------------------------------------------
+    Gui, Add, GroupBox, xm y33 Section vSearchStringGroupBox W%SDGroupWidth% H%SDGroupHeight% cBlue, SearchString Font
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xm+5 yp+21 vSDSearchStringFontNameText, &Name:
     Gui, Add, DropDownList, xm+%SecondColumnOffset% yp-3 w200 R15 vSDSearchStringFontNameDDL Choose%SearchStringFontIndex% gSDSearchStringFontNameDDLHandler, %fontDropDownList%
@@ -110,46 +119,48 @@ ShowSettingsDialog()
     ; -----------------------------------------------------------------------------
 
     ; -----------------------------------------------------------------------------
-    Gui, Add, GroupBox, xm Section vListViewGroupBox W%SDWindowWidth% H144 cBlue, ListView Font
+    SDControlPosX := SDGroupWidth + 3
+    Gui, Add, GroupBox, xm+%SDControlPosX% y33 Section vListViewGroupBox W%SDGroupWidth% H144 cBlue, ListView Font
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xp+5 yp+21 vSDListViewFontNameText, &Name:
-    Gui, Add, DropDownList, xm+%SecondColumnOffset% yp-3 w200 R15 vSDListViewFontNameDDL gSDListViewFontNameDDLHandler Choose%ListViewFontIndex%, %fontDropDownList%
+    Gui, Add, Text, xs+5 yp+21 vSDListViewFontNameText, &Name:
+    Gui, Add, DropDownList, xs+%SecondColumnOffset% yp-3 w200 R15 vSDListViewFontNameDDL gSDListViewFontNameDDLHandler Choose%ListViewFontIndex%, %fontDropDownList%
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xs+5 y+6 vSDListViewFontSizeText, &Size:
-    Gui, Add, Edit, xm+%SecondColumnOffset% yp-3 w200
+    Gui, Add, Edit, xs+%SecondColumnOffset% yp-3 w200
     Gui, Add, UpDown, vSDListViewFontSizeUpDown gSDListViewFontSizeUpDownHandler Range8-25, %ListViewFontSize%
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xm+5 y+6 vSDListViewFontColorText, &Color:
-    Gui, Add, Progress, xm+%SecondColumnOffset% yp-3 w200 h21 vSDListViewFontColorProgress c%ListViewFontColor% BackgroundBlack Disabled, 100
-    Gui, Add, Text, xp yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewFontColorProgressText gSDListViewFontColorChangeBtnHandler
+    Gui, Add, Text, xs+5 y+6 vSDListViewFontColorText, &Color:
+    Gui, Add, Progress, xs+%SecondColumnOffset% yp-3 w200 h21 vSDListViewFontColorProgress c%ListViewFontColor% BackgroundBlack Disabled, 100
+    Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewFontColorProgressText gSDListViewFontColorChangeBtnHandler
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xm+5 y+6 vSDListViewFontStyleText, St&yle:
-    Gui, Add, DropDownList, xm+%SecondColumnOffset% yp-3 w200 vSDListViewFontStyleDDL gSDListViewFontStyleDDLHandler Choose%ListViewFontStyleIndex%, norm|italic|bold|bold italic
+    Gui, Add, Text, xs+5 y+6 vSDListViewFontStyleText, St&yle:
+    Gui, Add, DropDownList, xs+%SecondColumnOffset% yp-3 w200 vSDListViewFontStyleDDL gSDListViewFontStyleDDLHandler Choose%ListViewFontStyleIndex%, norm|italic|bold|bold italic
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xm+5 y+6 vSDListViewBkColorText, &Bk Color:
-    Gui, Add, Progress, xm+%SecondColumnOffset% yp-3 w200 h21 vSDListViewBkColorProgress c%ListViewBackgroundColor% BackgroundBlack Disabled, 100
-    Gui, Add, Text, xp yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewBkColorProgressText gSDListViewBkColorChangeBtnHandler
+    Gui, Add, Text, xs+5 y+6 vSDListViewBkColorText, &Bk Color:
+    Gui, Add, Progress, xs+%SecondColumnOffset% yp-3 w200 h21 vSDListViewBkColorProgress c%ListViewBackgroundColor% BackgroundBlack Disabled, 100
+    Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewBkColorProgressText gSDListViewBkColorChangeBtnHandler
     ; -----------------------------------------------------------------------------
 
+    ColumnOffset := 123
     ; -----------------------------------------------------------------------------
-    Gui, Add, GroupBox, xm Section vGeneralGroupBox W%SDWindowWidth% H108 cBlue, General
+    Gui, Add, GroupBox, xm Section vGeneralGroupBox W%SDGroupWidth% H108 cBlue, General
     ; -----------------------------------------------------------------------------
-    Gui, Add, Checkbox, xs+5 ys+20 vPromptTerminateAllCheckBox gPromptTerminateAllCheckBoxHandler Checked%PromptTerminateAll%, &PromptTerminateAll
+    Gui, Add, Checkbox, xs+5 ys+20 vSDPromptTerminateAllCheckBox gSDPromptTerminateAllCheckBoxHandler Checked%PromptTerminateAll%, &PromptTerminateAll
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xs+5 y+6 , Window &Transparency
-    Gui, Add, Edit, xs+120 yp-4 w48
-    Gui, Add, UpDown, vWindowTransparencyUpDown gWindowTransparencyUpDownHandler Range100-255, %WindowTransparency%
+    Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48
+    Gui, Add, UpDown, vSDWindowTransparencyUpDown gSDWindowTransparencyUpDownHandler Range100-255, %WindowTransparency%
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6 , Window &Width
-    Gui, Add, Edit, xs+120 yp-4 w48
-    Gui, Add, UpDown, vWindowWidthPercentageUpDown gWindowWidthPercentageUpDownHandler Range40-90, %WindowWidthPercentage%
+    Gui, Add, Text, xs+5 y+6 , Window &Width (`%)
+    Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48
+    Gui, Add, UpDown, vSDWindowWidthPercentageUpDown gSDWindowWidthPercentageUpDownHandler Range40-90, %WindowWidthPercentage%
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6 , Window &Height Max
-    Gui, Add, Edit, xs+120 yp-4 w48
-    Gui, Add, UpDown, vWindowHeightMaxPercentageUpDown gWindowHeightMaxPercentageUpDownHandler Range10-90, %WindowHeightMaxPercentage%
+    Gui, Add, Text, xs+5 y+6 , Window &Height Max (`%)
+    Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48
+    Gui, Add, UpDown, vSDWindowHeightMaxPercentageUpDown gSDWindowHeightMaxPercentageUpDownHandler Range10-90, %WindowHeightMaxPercentage%
     ; -----------------------------------------------------------------------------
     
-    Gui, Add, Button, xm  w60 vSDOkBtn gOkBtnHandler +Default, &Ok
+    Gui, Add, Button, xm  w60 vSDOkBtn gOkBtnHandler hwndhSDOkBtn +Default, &OK
     Gui, Add, Button, x+3 w60 vSDApplyBtn gSDApplyBtnHandler -Default Disabled, &Apply
     Gui, Add, Button, x+3 w60 vSDCancelBtn gSDCancelBtnHandler hwndhSDCancelBtn -Default Disabled, Cance&l
     Gui, Add, Button, x+3 w60 vSDResetBtn gResetBtnHandler, &Reset...
@@ -166,6 +177,8 @@ SettingsDialogGuiSize:
     PrintKV2("A_GuiWidth", A_GuiWidth, "A_GuiHeight", A_GuiHeight)
     WinGetPos, X, Y, Width, Height, A
     MoveControlsToHorizontalCenter("SDOkBtn|SDApplyBtn|SDCancelBtn|SDResetBtn", A_GuiWidth)
+    ;~ AutoXYWH("w", "StorageEdit")
+    GuiControl, Move, GeneralGroupBox, w531
     ControlFocus, , ahk_id %hSDOkBtn%
 Return
 
@@ -186,6 +199,20 @@ Return
 ; Save the modified settings from controls to the variables
 ; -----------------------------------------------------------------------------
 ApplySettings:
+    ;~ Gui, Submit, NoHide
+    ;~ PrintKV("SDSearchStringFontNameDDL", SDSearchStringFontNameDDL)
+    ;~ PrintKV("SDSearchStringFontSizeUpDown", SDSearchStringFontSizeUpDown)
+    ;~ PrintKV("SDSearchStringFontStyleDDL", SDSearchStringFontStyleDDL)
+    
+    ;~ PrintKV("SDListViewFontNameDDL", SDListViewFontNameDDL)
+    ;~ PrintKV("SDListViewFontSizeUpDown", SDListViewFontSizeUpDown)
+    ;~ PrintKV("SDListViewFontStyleDDL", SDListViewFontStyleDDL)
+    
+    ;~ PrintKV("SDPromptTerminateAllCheckBox", SDPromptTerminateAllCheckBox)
+    ;~ PrintKV("SDWindowTransparencyUpDown", SDWindowTransparencyUpDown)
+    ;~ PrintKV("SDWindowWidthPercentageUpDown", SDWindowWidthPercentageUpDown)
+    ;~ PrintKV("SDWindowHeightMaxPercentageUpDown", SDWindowHeightMaxPercentageUpDown)
+    
     GuiControlGet, SearchStringFontName, , SDSearchStringFontNameDDL
     GuiControlGet, SearchStringFontSize, , SDSearchStringFontSizeUpDown
     SearchStringFontColor := tSDSearchStringFontColor
@@ -197,10 +224,10 @@ ApplySettings:
     GuiControlGet, ListViewFontStyle, , SDListViewFontStyleDDL
     ListViewBackgroundColor := tSDListViewBackgroundColor
     
-    GuiControlGet, PromptTerminateAll, , PromptTerminateAllCheckBox
-    GuiControlGet, WindowTransparency, , WindowTransparencyUpDown
-    GuiControlGet, WindowWidthPercentage, , WindowWidthPercentageUpDown
-    GuiControlGet, WindowHeightMaxPercentage, , WindowHeightMaxPercentageUpDown
+    GuiControlGet, PromptTerminateAll, , SDPromptTerminateAllCheckBox
+    GuiControlGet, WindowTransparency, , SDWindowTransparencyUpDown
+    GuiControlGet, WindowWidthPercentage, , SDWindowWidthPercentageUpDown
+    GuiControlGet, WindowHeightMaxPercentage, , SDWindowHeightMaxPercentageUpDown
 Return
 
 
@@ -231,7 +258,7 @@ ResetBtnHandler:
         return
     }
 
-    CreateDefaultINIFile(SettingsINIFile)
+    CreateDefaultINIFile(SettingsINIFilePath)
     IniFileData("Read")	
     ; TODO: Need to reload the window with default settings
     Gui, SettingsDialog:Destroy
@@ -251,6 +278,24 @@ OkBtnHandler:
         IniFileData("Write")
     }
     Gui, SettingsDialog:Destroy
+Return
+
+
+; -----------------------------------------------------------------------------
+; Export Btn Handler
+; -----------------------------------------------------------------------------
+SDExportBtnHandler:
+    Gui, +OwnDialogs
+    FormatTime, dtStr, , yyyyMMddHHmm
+    FileSelectFile, exportINIPath, S, %A_ScriptDir%\AltTabAlternativeSettings_%dtStr%.ini, Export Settings, INI files (*.ini)
+    if (exportINIPath != "") {
+        PrintKV("SettingsINIFilePath", SettingsINIFilePath)
+        PrintKV("exportINIPath", exportINIPath)
+        Run, %ComSpec% /C "COPY /Y ""%SettingsINIFilePath%"" ""%exportINIPath%""", , Hide
+        if (ErrorLevel != 0) {
+            MsgBox, Failed to export settings to "%exportINIPath%".
+        }
+    }
 Return
 
 
@@ -360,8 +405,8 @@ Return
 ; -----------------------------------------------------------------------------
 ; PromptTerminateAll CheckBox Handler
 ; -----------------------------------------------------------------------------
-PromptTerminateAllCheckBoxHandler:
-    GuiControlGet, tSDPromptTerminateAll, , PromptTerminateAllCheckBox
+SDPromptTerminateAllCheckBoxHandler:
+    GuiControlGet, tSDPromptTerminateAll, , SDPromptTerminateAllCheckBox
     CheckSettingsModified()
 Return
 
@@ -369,8 +414,8 @@ Return
 ; -----------------------------------------------------------------------------
 ; WindowTransparency UpDown Handler
 ; -----------------------------------------------------------------------------
-WindowTransparencyUpDownHandler:
-    GuiControlGet, tSDWindowTransparency, , WindowTransparencyUpDown
+SDWindowTransparencyUpDownHandler:
+    GuiControlGet, tSDWindowTransparency, , SDWindowTransparencyUpDown
     CheckSettingsModified()
 Return
 
@@ -378,8 +423,8 @@ Return
 ; -----------------------------------------------------------------------------
 ; WindowWidth Percentage UpDown Handler
 ; -----------------------------------------------------------------------------
-WindowWidthPercentageUpDownHandler:
-    GuiControlGet, tSDWindowWidthPercentage, , WindowWidthPercentageUpDown
+SDWindowWidthPercentageUpDownHandler:
+    GuiControlGet, tSDWindowWidthPercentage, , SDWindowWidthPercentageUpDown
     CheckSettingsModified()
 Return
 
@@ -387,8 +432,8 @@ Return
 ; -----------------------------------------------------------------------------
 ; WindowHeightMax Percentage UpDown Handler
 ; -----------------------------------------------------------------------------
-WindowHeightMaxPercentageUpDownHandler:
-    GuiControlGet, tSDWindowHeightMaxPercentage, , WindowHeightMaxPercentageUpDown
+SDWindowHeightMaxPercentageUpDownHandler:
+    GuiControlGet, tSDWindowHeightMaxPercentage, , SDWindowHeightMaxPercentageUpDown
     CheckSettingsModified()
 Return
 
@@ -508,13 +553,23 @@ ShowFontDialog(ByRef Name, ByRef Style, hwnd="", effects=1) {
 ; Deletes the INI file and creates a new one if INI file already exist.
 ; So, please check the existence of INI file before calling this method.
 ; -----------------------------------------------------------------------------
-CreateDefaultINIFile(SettingsINIFile) {
+CreateDefaultINIFile(SettingsINIFilePath) {
     Global
+    Local directoryPath
     PrintSub("CreateDefaultINIFile Begin")
     PrintDefaultSettings()
-    PrintKV("SettingsINIFile", SettingsINIFile)
-    If (FileExist(SettingsINIFile)) {
-        FileDelete, %SettingsINIFile%
+    PrintKV("SettingsINIFilePath", SettingsINIFilePath)
+    If (FileExist(SettingsINIFilePath)) {
+        FileDelete, %SettingsINIFilePath%
+    }
+    else {
+        SplitPath, SettingsINIFilePath, , directoryPath
+        if (!FileExist(directoryPath)) {
+            FileCreateDir, %directoryPath%
+            if (ErrorLevel != 0) {
+                MsgBox, 48, Error, Failed to create directory "%directoryPath%"
+            }
+        }
     }
 
     FileAppend,
@@ -543,8 +598,14 @@ PromptTerminateAll=%PromptTerminateAllDefault%
 WindowTransparency=%WindowTransparencyDefault%
 WindowWidthPercentage=%WindowWidthPercentageDefault%
 WindowHeightMaxPercentage=%WindowHeightMaxPercentageDefault%
-    ), %SettingsINIFile%
+    ), %SettingsINIFilePath%
+
+    if (ErrorLevel != 0) {
+        MsgBox, 48, Error, Failed to create INI file %SettingsINIFilePath%
+    }
+    
     PrintSub("CreateDefaultINIFile End")
+    
     Return
 }
 
@@ -556,44 +617,44 @@ IniFileData(ReadOrWrite)
 {
     Global
     PrintSub("IniFileData")
-    PrintKV("SettingsINIFile", SettingsINIFile)
+    PrintKV("SettingsINIFilePath", SettingsINIFilePath)
     DefineDefaultSettings()    
     
-    If (!FileExist(SettingsINIFile)) {
-        CreateDefaultINIFile(SettingsINIFile)
+    If (!FileExist(SettingsINIFilePath)) {
+        CreateDefaultINIFile(SettingsINIFilePath)
     }
 
     if ReadOrWrite = Read
     {
-        ReadVariable("SearchStringFontName",    	SettingsINIFile, "SearchString", "FontName",                  SearchStringFontNameDefault)
-        ReadVariable("SearchStringFontSize",    	SettingsINIFile, "SearchString", "FontSize",                  SearchStringFontSizeDefault)
-        ReadVariable("SearchStringFontColor",   	SettingsINIFile, "SearchString", "FontColor",                 SearchStringFontColorDefault)
-        ReadVariable("SearchStringFontStyle",   	SettingsINIFile, "SearchString", "FontStyle",                 SearchStringFontStyleDefault)
-        ReadVariable("ListViewFontName",        	SettingsINIFile, "ListView",     "FontName",                  ListViewFontNameDefault)
-        ReadVariable("ListViewFontSize",        	SettingsINIFile, "ListView",     "FontSize",                  ListViewFontSizeDefault)
-        ReadVariable("ListViewFontColor",       	SettingsINIFile, "ListView",     "FontColor",                 ListViewFontColorDefault)
-        ReadVariable("ListViewFontStyle",       	SettingsINIFile, "ListView",     "FontStyle",                 ListViewFontStyleDefault)
-        ReadVariable("ListViewBackgroundColor", 	SettingsINIFile, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
-        ReadVariable("PromptTerminateAll",      	SettingsINIFile, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
-        ReadVariable("WindowTransparency",      	SettingsINIFile, "General",      "WindowTransparency",        WindowTransparencyDefault)
-        ReadVariable("WindowWidthPercentage",   	SettingsINIFile, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
-        ReadVariable("WindowHeightMaxPercentage",   SettingsINIFile, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
+        ReadVariable("SearchStringFontName",    	SettingsINIFilePath, "SearchString", "FontName",                  SearchStringFontNameDefault)
+        ReadVariable("SearchStringFontSize",    	SettingsINIFilePath, "SearchString", "FontSize",                  SearchStringFontSizeDefault)
+        ReadVariable("SearchStringFontColor",   	SettingsINIFilePath, "SearchString", "FontColor",                 SearchStringFontColorDefault)
+        ReadVariable("SearchStringFontStyle",   	SettingsINIFilePath, "SearchString", "FontStyle",                 SearchStringFontStyleDefault)
+        ReadVariable("ListViewFontName",        	SettingsINIFilePath, "ListView",     "FontName",                  ListViewFontNameDefault)
+        ReadVariable("ListViewFontSize",        	SettingsINIFilePath, "ListView",     "FontSize",                  ListViewFontSizeDefault)
+        ReadVariable("ListViewFontColor",       	SettingsINIFilePath, "ListView",     "FontColor",                 ListViewFontColorDefault)
+        ReadVariable("ListViewFontStyle",       	SettingsINIFilePath, "ListView",     "FontStyle",                 ListViewFontStyleDefault)
+        ReadVariable("ListViewBackgroundColor", 	SettingsINIFilePath, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
+        ReadVariable("PromptTerminateAll",      	SettingsINIFilePath, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
+        ReadVariable("WindowTransparency",      	SettingsINIFilePath, "General",      "WindowTransparency",        WindowTransparencyDefault)
+        ReadVariable("WindowWidthPercentage",   	SettingsINIFilePath, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
+        ReadVariable("WindowHeightMaxPercentage",   SettingsINIFilePath, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
     }
     else
     {
-        WriteVariable(SearchStringFontName,         SettingsINIFile, "SearchString", "FontName",                  SearchStringFontNameDefault)
-        WriteVariable(SearchStringFontSize,         SettingsINIFile, "SearchString", "FontSize",                  SearchStringFontSizeDefault)
-        WriteVariable(SearchStringFontColor,        SettingsINIFile, "SearchString", "FontColor",                 SearchStringFontColorDefault)
-        WriteVariable(SearchStringFontStyle,        SettingsINIFile, "SearchString", "FontStyle",                 SearchStringFontStyleDefault)
-        WriteVariable(ListViewFontName,             SettingsINIFile, "ListView",     "FontName",                  ListViewFontNameDefault)
-        WriteVariable(ListViewFontSize,             SettingsINIFile, "ListView",     "FontSize",                  ListViewFontSizeDefault)
-        WriteVariable(ListViewFontColor,            SettingsINIFile, "ListView",     "FontColor",                 ListViewFontColorDefault)
-        WriteVariable(ListViewFontStyle,            SettingsINIFile, "ListView",     "FontStyle",                 ListViewFontStyleDefault)
-        WriteVariable(ListViewBackgroundColor,      SettingsINIFile, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
-        WriteVariable(PromptTerminateAll,           SettingsINIFile, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
-        WriteVariable(WindowTransparency,           SettingsINIFile, "General",      "WindowTransparency",        WindowTransparencyDefault)
-        WriteVariable(WindowWidthPercentage,        SettingsINIFile, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
-        WriteVariable(WindowHeightMaxPercentage,    SettingsINIFile, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
+        WriteVariable(SearchStringFontName,         SettingsINIFilePath, "SearchString", "FontName",                  SearchStringFontNameDefault)
+        WriteVariable(SearchStringFontSize,         SettingsINIFilePath, "SearchString", "FontSize",                  SearchStringFontSizeDefault)
+        WriteVariable(SearchStringFontColor,        SettingsINIFilePath, "SearchString", "FontColor",                 SearchStringFontColorDefault)
+        WriteVariable(SearchStringFontStyle,        SettingsINIFilePath, "SearchString", "FontStyle",                 SearchStringFontStyleDefault)
+        WriteVariable(ListViewFontName,             SettingsINIFilePath, "ListView",     "FontName",                  ListViewFontNameDefault)
+        WriteVariable(ListViewFontSize,             SettingsINIFilePath, "ListView",     "FontSize",                  ListViewFontSizeDefault)
+        WriteVariable(ListViewFontColor,            SettingsINIFilePath, "ListView",     "FontColor",                 ListViewFontColorDefault)
+        WriteVariable(ListViewFontStyle,            SettingsINIFilePath, "ListView",     "FontStyle",                 ListViewFontStyleDefault)
+        WriteVariable(ListViewBackgroundColor,      SettingsINIFilePath, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
+        WriteVariable(PromptTerminateAll,           SettingsINIFilePath, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
+        WriteVariable(WindowTransparency,           SettingsINIFilePath, "General",      "WindowTransparency",        WindowTransparencyDefault)
+        WriteVariable(WindowWidthPercentage,        SettingsINIFilePath, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
+        WriteVariable(WindowHeightMaxPercentage,    SettingsINIFilePath, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
     }
 }
 
@@ -601,25 +662,25 @@ IniFileData(ReadOrWrite)
 ; -----------------------------------------------------------------------------
 ; Read the setting from INI file
 ; -----------------------------------------------------------------------------
-ReadVariable(VarName, SettingsINIFile, Section, Key, Default="")
+ReadVariable(VarName, SettingsINIFilePath, Section, Key, Default="")
 {
-    INIFile(VarName, SettingsINIFile, Section, Key, Default, "Read")
+    INIFile(VarName, SettingsINIFilePath, Section, Key, Default, "Read")
 }
 
 
 ; -----------------------------------------------------------------------------
 ; Write the setting to INI file
 ; -----------------------------------------------------------------------------
-WriteVariable(Value, SettingsINIFile, Section, Key, WriteEmpty=true)
+WriteVariable(Value, SettingsINIFilePath, Section, Key, WriteEmpty=true)
 {
-    INIFile(Value, SettingsINIFile, Section, Key, "", "Write", WriteEmpty)
+    INIFile(Value, SettingsINIFilePath, Section, Key, "", "Write", WriteEmpty)
 }
 
 
 ; -----------------------------------------------------------------------------
 ; Read/Write the setting from/to INI file
 ; -----------------------------------------------------------------------------
-INIFile(VarName, SettingsINIFile, Section, Key, Default, ReadOrWrite="Read", WriteEmpty=true)
+INIFile(VarName, SettingsINIFilePath, Section, Key, Default, ReadOrWrite="Read", WriteEmpty=true)
 {
     ;~ PrintKV("VarName", VarName)
     ;~ PrintKV("ReadOrWrite", ReadOrWrite)
@@ -627,7 +688,7 @@ INIFile(VarName, SettingsINIFile, Section, Key, Default, ReadOrWrite="Read", Wri
     
     If ReadOrWrite = Read
     {
-        IniRead, %VarName%, %SettingsINIFile%, %Section%, %Key%, %Default%
+        IniRead, %VarName%, %SettingsINIFilePath%, %Section%, %Key%, %Default%
         If %VarName% = ERROR
             %VarName% = ; set to blank value instead of "error"
     }
@@ -638,13 +699,13 @@ INIFile(VarName, SettingsINIFile, Section, Key, Default, ReadOrWrite="Read", Wri
             If %VarName% =  ;Test if Var is empty
             {
                 ; Test if the field in INI is existed
-                IniRead, temp_var, %SettingsINIFile%, %Section%, %Var%
+                IniRead, temp_var, %SettingsINIFilePath%, %Section%, %Var%
                 If temp_var = ERROR
                     return
             }
         }
 
-        IniWrite, %VarName%, %SettingsINIFile%, %Section%, %Key%
+        IniWrite, %VarName%, %SettingsINIFilePath%, %Section%, %Key%
     }
 }
 
