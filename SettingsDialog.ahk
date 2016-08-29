@@ -98,7 +98,7 @@ ShowSettingsDialog()
 
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xm ym+5 vSDStorageText hwndhSDStorageText, Storage:
-    Gui, Add, Edit, x+3 yp-3 w426 vSDStorageEdit hwndhSDStorageEdit ReadOnly -Multi, %SettingsINIFilePath%
+    Gui, Add, Edit, x+3 yp-3 w426 vSDStorageEdit hwndhSDStorageEdit ReadOnly -Multi R1, %SettingsINIFilePath%
     Gui, Add, Button, x+3 yp-1 w60 vSDExportBtn hwndhSDExportBtn gSDExportBtnHandler, &Export...
     ; -----------------------------------------------------------------------------
     Gui, Add, GroupBox, xm y33 Section vSearchStringGroupBox W%SDGroupWidth% H%SDGroupHeight% cBlue, SearchString Font
