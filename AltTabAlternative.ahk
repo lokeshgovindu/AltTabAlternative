@@ -805,6 +805,11 @@ ListViewEvent:
         ; Hence, no need to check for upper case letters.
         ; -----------------------------------------------------------------------------
         if ((vkCode >= 65 && vkCode <= 90) || (vkCode >= 48 && vkCode <= 57)) {
+            IsCapsLockKeyDown := GetKeyState("CapsLock", "T")
+            if ((IsShiftKeyDown && !IsCapsLockKeyDown) ||(!IsShiftKeyDown && IsCapsLockKeyDown)) {
+                StringUpper, key, key
+            }
+            
             ;~ Print("Key is alnum")
             NewSearchString := NewSearchString . key
             SelectedRowNumber := 1

@@ -24,7 +24,7 @@ global GOTOS := {}
 GoTo_AutoExecute(1)		;1 = Gui is movable
 return
 #if GetActiveFile()		;If ahk window is active
-	F7::Goto_Main_Gui()
+	!M::Goto_Main_Gui()
 #if
 ;-------------------------------------
 
