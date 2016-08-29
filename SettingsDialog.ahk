@@ -14,10 +14,10 @@ o-----------------------------------------------------------------------------o
 
 ;~ ; This is for my testing
 ;~ If (true) {
-    ;~ ProductName             := "AltTabAlternative"
+    ;~ ProductName                 := "AltTabAlternative"
     ;~ SettingsINIFileName         := "AltTabAlternativeSettings.ini"
     ;~ SettingsDirPath             := A_AppData . "\" . ProductName
-    ;~ SettingsINIFilePath     := SettingsDirPath . "\" . SettingsINIFileName
+    ;~ SettingsINIFilePath         := SettingsDirPath . "\" . SettingsINIFileName
     ;~ PrintKV("SettingsDirPath", SettingsDirPath)
     ;~ PrintKV("SettingsINIFilePath", SettingsINIFilePath)
     ;~ IniFileData("Read")
@@ -98,8 +98,8 @@ ShowSettingsDialog()
 
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xm ym+5 vSDStorageText hwndhSDStorageText, Storage:
-    Gui, Add, Edit, x+3 yp-3 w426 vSDStorageEdit hwndhSDStorageEdit ReadOnly -Multi R1, %SettingsINIFilePath%
-    Gui, Add, Button, x+3 yp-1 w60 vSDExportBtn hwndhSDExportBtn gSDExportBtnHandler, &Export...
+    Gui, Add, Edit, x+3 yp-3 w406 vSDStorageEdit hwndhSDStorageEdit ReadOnly -Multi R1, %SettingsINIFilePath%
+    Gui, Add, Button, x+3 yp-1 w80 vSDExportBtn hwndhSDExportBtn gSDExportBtnHandler, &Export...
     ; -----------------------------------------------------------------------------
     Gui, Add, GroupBox, xm y33 Section vSearchStringGroupBox W%SDGroupWidth% H%SDGroupHeight% cBlue, SearchString Font
     ; -----------------------------------------------------------------------------
@@ -160,10 +160,11 @@ ShowSettingsDialog()
     Gui, Add, UpDown, vSDWindowHeightMaxPercentageUpDown gSDWindowHeightMaxPercentageUpDownHandler Range10-90, %WindowHeightMaxPercentage%
     ; -----------------------------------------------------------------------------
     
-    Gui, Add, Button, xm  w60 vSDOkBtn gOkBtnHandler hwndhSDOkBtn +Default, &OK
-    Gui, Add, Button, x+3 w60 vSDApplyBtn gSDApplyBtnHandler -Default Disabled, &Apply
-    Gui, Add, Button, x+3 w60 vSDCancelBtn gSDCancelBtnHandler hwndhSDCancelBtn -Default Disabled, Cance&l
-    Gui, Add, Button, x+3 w60 vSDResetBtn gResetBtnHandler, &Reset...
+    Gui, Add, Button, xm  w80 vSDOkBtn gOkBtnHandler hwndhSDOkBtn +Default, &OK
+    Gui, Add, Button, x+3 w80 vSDApplyBtn gSDApplyBtnHandler -Default Disabled, &Apply
+    Gui, Add, Button, x+3 w80 vSDCancelBtn gSDCancelBtnHandler hwndhSDCancelBtn -Default Disabled, Cance&l
+    Gui, Add, Button, x+3 w80 vSDResetBtn gResetBtnHandler, &Reset...
+    Gui, Add, Button, x+3 w80 vSDImportBtn gImportBtnHandler, &Import...
     
     Gui, Show, AutoSize Center
     Return
@@ -176,7 +177,7 @@ SettingsDialogGuiSize:
     PrintSub("SettingsDialogGuiSize")
     PrintKV2("A_GuiWidth", A_GuiWidth, "A_GuiHeight", A_GuiHeight)
     WinGetPos, X, Y, Width, Height, A
-    MoveControlsToHorizontalCenter("SDOkBtn|SDApplyBtn|SDCancelBtn|SDResetBtn", A_GuiWidth)
+    MoveControlsToHorizontalCenter("SDOkBtn|SDApplyBtn|SDCancelBtn|SDResetBtn|SDImportBtn", A_GuiWidth)
     ;~ AutoXYWH("w", "StorageEdit")
     GuiControl, Move, GeneralGroupBox, w531
     ControlFocus, , ahk_id %hSDOkBtn%
@@ -263,6 +264,22 @@ ResetBtnHandler:
     ; TODO: Need to reload the window with default settings
     Gui, SettingsDialog:Destroy
     ShowSettingsDialog()
+Return
+
+
+; -----------------------------------------------------------------------------
+; Import Btn Handler
+; -----------------------------------------------------------------------------
+ImportBtnHandler:
+    Gui, +OwnDialogs
+    FileSelectFile, importINIPath, S, %A_ScriptDir%\AltTabAlternativeSettings.ini, Import Settings, INI files (*.ini)
+    if (importINIPath != "") {
+        PrintKV("importINIPath", importINIPath)
+        IniFileDataNew(importINIPath, "Read")
+        ; TODO: Need to reload the window with default settings
+        Gui, SettingsDialog:Destroy
+        ShowSettingsDialog()
+    }
 Return
 
 
@@ -618,43 +635,56 @@ IniFileData(ReadOrWrite)
     Global
     PrintSub("IniFileData")
     PrintKV("SettingsINIFilePath", SettingsINIFilePath)
-    DefineDefaultSettings()    
-    
+    DefineDefaultSettings()
+
     If (!FileExist(SettingsINIFilePath)) {
         CreateDefaultINIFile(SettingsINIFilePath)
     }
+    
+    IniFileDataNew(SettingsINIFilePath, ReadOrWrite)
+}
 
+
+; -----------------------------------------------------------------------------
+; Read/write settings from/to the settings INI file.
+; -----------------------------------------------------------------------------
+IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
+{
+    Global
+    PrintSub("IniFileDataNew")
+    PrintKV("SettingsINIFilePathIn", SettingsINIFilePathIn)
+    
     if ReadOrWrite = Read
     {
-        ReadVariable("SearchStringFontName",    	SettingsINIFilePath, "SearchString", "FontName",                  SearchStringFontNameDefault)
-        ReadVariable("SearchStringFontSize",    	SettingsINIFilePath, "SearchString", "FontSize",                  SearchStringFontSizeDefault)
-        ReadVariable("SearchStringFontColor",   	SettingsINIFilePath, "SearchString", "FontColor",                 SearchStringFontColorDefault)
-        ReadVariable("SearchStringFontStyle",   	SettingsINIFilePath, "SearchString", "FontStyle",                 SearchStringFontStyleDefault)
-        ReadVariable("ListViewFontName",        	SettingsINIFilePath, "ListView",     "FontName",                  ListViewFontNameDefault)
-        ReadVariable("ListViewFontSize",        	SettingsINIFilePath, "ListView",     "FontSize",                  ListViewFontSizeDefault)
-        ReadVariable("ListViewFontColor",       	SettingsINIFilePath, "ListView",     "FontColor",                 ListViewFontColorDefault)
-        ReadVariable("ListViewFontStyle",       	SettingsINIFilePath, "ListView",     "FontStyle",                 ListViewFontStyleDefault)
-        ReadVariable("ListViewBackgroundColor", 	SettingsINIFilePath, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
-        ReadVariable("PromptTerminateAll",      	SettingsINIFilePath, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
-        ReadVariable("WindowTransparency",      	SettingsINIFilePath, "General",      "WindowTransparency",        WindowTransparencyDefault)
-        ReadVariable("WindowWidthPercentage",   	SettingsINIFilePath, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
-        ReadVariable("WindowHeightMaxPercentage",   SettingsINIFilePath, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
+        ReadVariable("SearchStringFontName",    	SettingsINIFilePathIn, "SearchString", "FontName",                  SearchStringFontNameDefault)
+        ReadVariable("SearchStringFontSize",    	SettingsINIFilePathIn, "SearchString", "FontSize",                  SearchStringFontSizeDefault)
+        ReadVariable("SearchStringFontColor",   	SettingsINIFilePathIn, "SearchString", "FontColor",                 SearchStringFontColorDefault)
+        ReadVariable("SearchStringFontStyle",   	SettingsINIFilePathIn, "SearchString", "FontStyle",                 SearchStringFontStyleDefault)
+        ReadVariable("ListViewFontName",        	SettingsINIFilePathIn, "ListView",     "FontName",                  ListViewFontNameDefault)
+        ReadVariable("ListViewFontSize",        	SettingsINIFilePathIn, "ListView",     "FontSize",                  ListViewFontSizeDefault)
+        ReadVariable("ListViewFontColor",       	SettingsINIFilePathIn, "ListView",     "FontColor",                 ListViewFontColorDefault)
+        ReadVariable("ListViewFontStyle",       	SettingsINIFilePathIn, "ListView",     "FontStyle",                 ListViewFontStyleDefault)
+        ReadVariable("ListViewBackgroundColor", 	SettingsINIFilePathIn, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
+        ReadVariable("PromptTerminateAll",      	SettingsINIFilePathIn, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
+        ReadVariable("WindowTransparency",      	SettingsINIFilePathIn, "General",      "WindowTransparency",        WindowTransparencyDefault)
+        ReadVariable("WindowWidthPercentage",   	SettingsINIFilePathIn, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
+        ReadVariable("WindowHeightMaxPercentage",   SettingsINIFilePathIn, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
     }
     else
     {
-        WriteVariable(SearchStringFontName,         SettingsINIFilePath, "SearchString", "FontName",                  SearchStringFontNameDefault)
-        WriteVariable(SearchStringFontSize,         SettingsINIFilePath, "SearchString", "FontSize",                  SearchStringFontSizeDefault)
-        WriteVariable(SearchStringFontColor,        SettingsINIFilePath, "SearchString", "FontColor",                 SearchStringFontColorDefault)
-        WriteVariable(SearchStringFontStyle,        SettingsINIFilePath, "SearchString", "FontStyle",                 SearchStringFontStyleDefault)
-        WriteVariable(ListViewFontName,             SettingsINIFilePath, "ListView",     "FontName",                  ListViewFontNameDefault)
-        WriteVariable(ListViewFontSize,             SettingsINIFilePath, "ListView",     "FontSize",                  ListViewFontSizeDefault)
-        WriteVariable(ListViewFontColor,            SettingsINIFilePath, "ListView",     "FontColor",                 ListViewFontColorDefault)
-        WriteVariable(ListViewFontStyle,            SettingsINIFilePath, "ListView",     "FontStyle",                 ListViewFontStyleDefault)
-        WriteVariable(ListViewBackgroundColor,      SettingsINIFilePath, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
-        WriteVariable(PromptTerminateAll,           SettingsINIFilePath, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
-        WriteVariable(WindowTransparency,           SettingsINIFilePath, "General",      "WindowTransparency",        WindowTransparencyDefault)
-        WriteVariable(WindowWidthPercentage,        SettingsINIFilePath, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
-        WriteVariable(WindowHeightMaxPercentage,    SettingsINIFilePath, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
+        WriteVariable(SearchStringFontName,         SettingsINIFilePathIn, "SearchString", "FontName",                  SearchStringFontNameDefault)
+        WriteVariable(SearchStringFontSize,         SettingsINIFilePathIn, "SearchString", "FontSize",                  SearchStringFontSizeDefault)
+        WriteVariable(SearchStringFontColor,        SettingsINIFilePathIn, "SearchString", "FontColor",                 SearchStringFontColorDefault)
+        WriteVariable(SearchStringFontStyle,        SettingsINIFilePathIn, "SearchString", "FontStyle",                 SearchStringFontStyleDefault)
+        WriteVariable(ListViewFontName,             SettingsINIFilePathIn, "ListView",     "FontName",                  ListViewFontNameDefault)
+        WriteVariable(ListViewFontSize,             SettingsINIFilePathIn, "ListView",     "FontSize",                  ListViewFontSizeDefault)
+        WriteVariable(ListViewFontColor,            SettingsINIFilePathIn, "ListView",     "FontColor",                 ListViewFontColorDefault)
+        WriteVariable(ListViewFontStyle,            SettingsINIFilePathIn, "ListView",     "FontStyle",                 ListViewFontStyleDefault)
+        WriteVariable(ListViewBackgroundColor,      SettingsINIFilePathIn, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
+        WriteVariable(PromptTerminateAll,           SettingsINIFilePathIn, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
+        WriteVariable(WindowTransparency,           SettingsINIFilePathIn, "General",      "WindowTransparency",        WindowTransparencyDefault)
+        WriteVariable(WindowWidthPercentage,        SettingsINIFilePathIn, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
+        WriteVariable(WindowHeightMaxPercentage,    SettingsINIFilePathIn, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
     }
 }
 

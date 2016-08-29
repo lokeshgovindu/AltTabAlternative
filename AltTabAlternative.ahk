@@ -698,18 +698,29 @@ ListViewEvent:
             ; *** Never kill explorer.exe forcefully
             if (exeName <> "explorer.exe" && IsShiftKeyDown) {
                 Print("Shift+Del pressed")
-                ;~ WinKill, ahk_id %windowID%
                 procID := PID%SelectedRowNumber%
                 PrintKV("Forcefully kill PID = ", procID)
                 KillCmd := "TASKKILL /PID " . procID . " /T /F"
                 PrintKV("KillCmd", KillCmd)
-                RunWait, %KillCmd%, , Hide
+                ;~ RunWait, %KillCmd%, , Hide
+                Run, %KillCmd%, , Hide
+                ;~ WinKill, ahk_id %ownerID%
+                Sleep, 50
+
             }
             else {
                 ; User ownerID to terminate window, otherwise topmost popwindow will be
                 ; closed instead of process/main window.
                 Print("NumpadDel pressed")
-                WinClose, ahk_id %ownerID%
+                ; Do NOT use WinClose, because
+                ; WinClose sends a WM_CLOSE message to the target window, which is a somewhat
+                ; forceful method of closing it. An alternate method of closing is to send the
+                ; following message.
+                ; It might produce different behavior because it is similar in effect to
+                ; pressing Alt-F4 or clicking the window's close button in its title bar:
+                ; Now, skype, jabber won't get killed on pressing NumpadDel key
+                ;~ WinClose, ahk_id %ownerID%
+                PostMessage, 0x112, 0xF060, , , ahk_id %windowID%  ; 0x112 = WM_SYSCOMMAND, 0xF060 = SC_CLOSE
                 Sleep, 50
             }
 

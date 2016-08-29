@@ -5,8 +5,7 @@ Known Limitations
 
 Known Issues
 ------------
-- Process is terminated on pressing Del key instead of default action on that
-  window. Ex: Skype, Cicso Jabber.
+- None
 
 
 2016.2 new features and bug fixes
@@ -18,8 +17,11 @@ Known Issues
   c. Window Transparency.
   d. Window Width & Window Height Maximum percentage wrt screen resolution.
 + Handled Alt+Esc.
-+ Settings go to AppData folder and can export settings to external file.
++ Settings go to AppData folder and can export settings to an external file.
++ Settings can be imported from an external file.
 - Display proper window icon for most of the windows.
+- Fixed: Process is terminated on pressing Del key instead of default action on
+  that window. Ex: Skype, Cicso Jabber.
 
 
 2016.1 new features and bug fixes
