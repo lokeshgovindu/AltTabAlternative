@@ -720,7 +720,8 @@ ListViewEvent:
                 ; pressing Alt-F4 or clicking the window's close button in its title bar:
                 ; Now, skype, jabber won't get killed on pressing NumpadDel key
                 ;~ WinClose, ahk_id %ownerID%
-                PostMessage, 0x112, 0xF060, , , ahk_id %windowID%  ; 0x112 = WM_SYSCOMMAND, 0xF060 = SC_CLOSE
+                ;~ PostMessage, 0x112, 0xF060, , , ahk_id %windowID%  ; 0x112 = WM_SYSCOMMAND, 0xF060 = SC_CLOSE
+                TerminateWindow(windowID)
                 Sleep, 50
             }
 
@@ -952,6 +953,14 @@ GetSelectedRowInfo()
 ListViewResizeVertically(Gui_ID) ; Automatically resize listview vertically
 {
     Global Window_Found_Count, lv_h_win_2000_adj
+    if (Window_Found_Count = 0) {
+        itemsCount := 1
+        LV_Add("", "", "", "", "")
+    }
+    else {
+        itemsCount := Window_Found_Count
+    }
+    
     SendMessage, 0x1000+31, 0, 0, SysListView321, ahk_id %Gui_ID% ; LVM_GETHEADER
     WinGetPos,,,, lv_header_h, ahk_id %ErrorLevel%
     VarSetCapacity( rect, 16, 0 )
@@ -975,7 +984,7 @@ ListViewResizeVertically(Gui_ID) ; Automatically resize listview vertically
     ;~ Print("lv_row_h = " . lv_row_h)
     ;~ Print("Window_Found_Count = " . Window_Found_Count)
     ;~ Print("lv_h_win_2000_adj = " . lv_h_win_2000_adj)
-    lv_h := 4 + lv_header_h + ( lv_row_h * Window_Found_Count ) + lv_h_win_2000_adj
+    lv_h := 4 + lv_header_h + ( lv_row_h * itemsCount ) + lv_h_win_2000_adj
     ; tab_y := lv_h - 6
     ; Tooltip % lv_header_h
     ;~ Print("lv_h = " . lv_h)
@@ -1408,8 +1417,9 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
 ; Terminate a process based on given WindowID
 ; -----------------------------------------------------------------------------
 TerminateWindow(windowID) {
-    WinClose, ahk_id %windowID%
-    Sleep, 50
+    ;~ WinClose, ahk_id %windowID%
+    PostMessage, 0x112, 0xF060, , , ahk_id %windowID%  ; 0x112 = WM_SYSCOMMAND, 0xF060 = SC_CLOSE
+    ;~ Sleep, 50
 }
 
 

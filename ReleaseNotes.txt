@@ -19,6 +19,7 @@ Known Issues
 + Handled Alt+Esc.
 + Settings go to AppData folder and can export settings to an external file.
 + Settings can be imported from an external file.
++ Show at least one item in ListView even there are no windows
 - Display proper window icon for most of the windows.
 - Fixed: Process is terminated on pressing Del key instead of default action on
   that window. Ex: Skype, Cicso Jabber.
