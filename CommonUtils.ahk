@@ -62,8 +62,56 @@ PrintKV4(strA, valA, strB, valB, strC, valC, strD, valD) {
 	FileAppend, [%CurrentTime%] %strA% = [%valA%]`, %strB% = [%valB%]`, %strC% = [%valC%]`, %strD% = [%valD%]`n, *
 }
 
+PrintListKV(str, lst) {
+    Local len
+    len := lst.Length()
+	FormatTime, CurrentTime, , yyyy-MM-dd HH:mm:ss
+    FileAppend, [%CurrentTime%] %str% = (%len%)[, *
+    Loop, % (len - 1)
+    {
+        FileAppend, % lst[A_Index] . "`, " , *
+    }
+    FileAppend, % lst[len], *
+    FileAppend, ]`n, *
+}
+
+GetDictLength(dict) {
+    Local ret = 0
+    for key, val in dict
+        ++ret
+    return ret    
+}
+
+PrintDictKV(str, dict) {
+	FormatTime, CurrentTime, , yyyy-MM-dd HH:mm:ss
+    FileAppend, [%CurrentTime%] %str% = {, *
+    for key, val in dict {
+        kv := Format("({}, {}), ", key, val)
+        FileAppend, % kv, *
+   }
+    FileAppend, }`n, *
+}
+
+PrintWindowsInfoList(str, dict) {
+	FormatTime, CurrentTime, , yyyy-MM-dd HH:mm:ss
+    FileAppend, [%CurrentTime%] %str% = {, *
+    for key, val in dict {
+        kv := Format("(0x{:x}, {}), ", key, val)
+        FileAppend, % kv, *
+   }
+    FileAppend, }`n, *
+}
+
+PrintLabel() {
+	PrintSub(A_ThisLabel)
+}
+
 PrintSub(name) {
 	Print("[Sub] --- " . name . " ---")
+}
+
+PrintFunc(name) {
+	Print("[Fun] --- " . name . " ---")
 }
 
 ;------------------------------------------------------------------------------

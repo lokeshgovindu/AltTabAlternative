@@ -34,11 +34,15 @@ WM_KEYUP   := 0x101
 ProductPage 	        := "http://alttabalternative.sourceforge.net/"
 AuthorName 		        := "Lokesh Govindu"
 AuthorPage 		        := "http://lokeshgovindu.blogspot.in/"
+ProductLatestURL        := "https://sourceforge.net/projects/alttabalternative/files/latest/download"
+UpdateFileURL           := "https://sourceforge.net/projects/alttabalternative/files/version.txt/download"
 AboutDialogText	         = AltTabAlternative is a small application created in <a href=`"https://autohotkey.com/`">AutoHotkey</a>, an alternative for windows native Alt+Tab switcher.
 
 SettingsDirPath         := A_AppData . "\" . ProductName
 SettingsINIFileName     := "AltTabAlternativeSettings.ini"
 SettingsINIFilePath     := SettingsDirPath . "\" . SettingsINIFileName
+CheckForUpdatesFileName := "CheckForUpdates.txt"
+CheckForUpdatesFilePath := SettingsDirPath . "\" . CheckForUpdatesFileName
 
 TrayIcon                := "AltTabAlternative.ico"
 ApplicationName         := ProductName
@@ -49,21 +53,22 @@ ReleaseNotesFileName    := "ReleaseNotes.txt"
 
 
 ; -----------------------------------------------------------------------------
-; 
+; ::Global Variables
 ; -----------------------------------------------------------------------------
-CurSearchString         := ""
-NewSearchString         := ""
-DisplayListShown        := 0
-CtrlBtnDown             := false
-NumberBtnDown           := false
-NumberBtnValue          := -1
-Window_Found_Count      := 0
-SelectedRowNumber       := 1
-SelectedWinNumber       := 0
-LVE_VkCodePrev           =
-HotkeysDisabled         := false
-CSHotkeysDisabled       := false    ; ContextSensitive Hotkeys
-ActivateWindow          := false
+Global CurSearchString          := ""
+Global NewSearchString          := ""
+Global DisplayListShown         := 0
+Global CtrlBtnDown              := false
+Global NumberBtnDown            := false
+Global NumberBtnValue           := -1
+Global Window_Found_Count       := 0
+Global SelectedRowNumber        := 1
+Global SelectedWinNumber        := 0
+Global LVE_VkCodePrev            =
+Global HotkeysDisabled          := false
+Global ActivateWindow           := false
+Global HiddenWindowsList        := {}
+Global ShowHiddenWindows        := false
 
 
 ; -----------------------------------------------------------------------------
@@ -75,10 +80,11 @@ ListviewResizeIcons := 0     ; Resize icons to fit listview area
 
 
 ; -----------------------------------------------------------------------------
-; Read settings here
+; Read settings here and ::Global Variables
 ; -----------------------------------------------------------------------------
 IniFileData("Read")
 PrintSettings()
+
 
 ; Position
 GuiX = Center
@@ -122,6 +128,12 @@ UseLargeIconsCurrent = %UseLargeIcons% ; for remembering original user setting b
 ; System Tray Menu
 ; -----------------------------------------------------------------------------
 
+MouseGetPos, xpos, ypos
+;~ PrintKV2("xpos", xpos, "ypos", ypos)
+Tooltip, Installing %ATAPRODUCTNAME% ......`, please wait, xpos, ypos, 1
+Sleep, 100
+ToolTip
+
 Gosub, InitiateHotkeys
 
 ; Menu Stuff
@@ -138,20 +150,214 @@ Menu, Tray, Add, Release Notes, ReleaseNotesHandler
 Menu, Tray, Add  ; Separator
 Menu, Tray, Add, Settings, SettingsHandler
 Menu, Tray, Add, Disable %ProgramName%, DisableHandler
-Menu, Tray, Add, Run at startup, RunAtStartupHandler
+Menu, Tray, Add, Check for updates, CheckForUpdatesHandler
+Menu, Tray, Add, Run At Startup, RunAtStartupHandler
 Menu, Tray, Add  ; Separator
 Menu, Tray, Add, Exit, ExitHandler
 Menu, Tray, Tip, % ProgramName " " ProductVersion
 Menu, Tray, Default, About %ATAPRODUCTNAME%
 
-; Check if the application is marked "Run at startup"
+
+; -----------------------------------------------------------------------------
+; Check if the application is marked "Run At Startup"
+; -----------------------------------------------------------------------------
 IfExist, %A_Startup%/%ProgramName%.lnk
 {
 	FileDelete, %A_Startup%/%ProgramName%.lnk
 	FileCreateShortcut, % H_Compiled ? A_AhkPath : A_ScriptFullPath, %A_Startup%/%ProgramName%.lnk
-	Menu, Tray, Check, Run at startup
+	Menu, Tray, Check, Run At Startup
 }
 
+; -----------------------------------------------------------------------------
+; Run CheckForUpdates
+; -----------------------------------------------------------------------------
+RunCheckForUpdates()
+
+
+; -----------------------------------------------------------------------------
+; Create AltTabAlternative Window ContextMenu here
+; -----------------------------------------------------------------------------
+Menu, ATAContextMenu, Add, &About %ATAPRODUCTNAME%, AboutHandler
+Menu, ATAContextMenu, Add  ; Separator
+Menu, ATAContextMenu, Add, &ReadMe, ReadMeHandler
+Menu, ATAContextMenu, Add, &Help`tF1, HelpHandler
+Menu, ATAContextMenu, Add, &Release Notes, ReleaseNotesHandler
+Menu, ATAContextMenu, Add  ; Separator
+Menu, ATAContextMenu, Add, &Settings`tF2, SettingsHandler
+Menu, ATAContextMenu, Add  ; Separator
+Menu, ATAContextMenu, Add, E&xit, ExitHandler
+
+
+; -----------------------------------------------------------------------------
+; Create AltTabAlternative ListView ContextMenu here
+; -----------------------------------------------------------------------------
+Menu, ListViewContextMenu, Add, &Close Window`tDel, CloseWindowHandler
+Menu, ListViewContextMenu, Add, &Kill Process`tShift+Del, KillProcessHandler
+Menu, ListViewContextMenu, Add  ; Separator
+Menu, ListViewContextMenu, Add, &Close All Windows`tNumpadDiv (/), CloseAllWindowsHandler
+Menu, ListViewContextMenu, Add, &Kill All Processes`tShift+NumpadDiv (/), KillAllProcessesHandler
+Menu, ListViewContextMenu, Add  ; Separator
+Menu, ListViewContextMenu, Add, &About %ATAPRODUCTNAME%, AboutHandler
+Menu, ListViewContextMenu, Add, &ReadMe, ReadMeHandler
+Menu, ListViewContextMenu, Add, &Help`tF1, HelpHandler
+Menu, ListViewContextMenu, Add, &Release Notes, ReleaseNotesHandler
+Menu, ListViewContextMenu, Add, &Settings`tF2, SettingsHandler
+Menu, ListViewContextMenu, Add  ; Separator
+Menu, ListViewContextMenu, Add, E&xit, ExitHandler
+
+Return
+
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Return Here
+; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+; -----------------------------------------------------------------------------
+; Display GuiContextMenu
+; -----------------------------------------------------------------------------
+GuiContextMenu:
+    PrintSub("GuiContextMenu")
+    ;~ PrintKV("A_Gui", A_Gui)
+    ;~ PrintKV("A_GuiControl", A_GuiControl)
+    ;~ PrintKV("A_EventInfo", A_EventInfo)
+    ;~ PrintKV("A_GuiEvent", A_GuiEvent)
+    if (A_GuiControl = "ListView1") {
+        Menu, ListViewContextMenu, Show, %A_GuiX%, %A_GuiY%
+    }
+    else {
+        Menu, ATAContextMenu, Show, %A_GuiX%, %A_GuiY%
+    }
+Return
+
+
+; -----------------------------------------------------------------------------
+; Display ListViewContextMenu
+; -----------------------------------------------------------------------------
+ListViewContextMenu:
+    PrintSub("ListViewContextMenu")
+    GetSelectedRowInfo()
+    PrintKV("[ListViewContextMenu] SelectedRowNumber", SelectedRowNumber)
+    GuiID := WinExist()
+
+    VarSetCapacity(rect, 16, 0)
+    SelectedRowNumberNew := SelectedRowNumber - 1
+    PrintKV("SelectedRowNumberNew", SelectedRowNumberNew)
+    xmin := ymin := 10000
+    xmax := ymax := -1000
+    
+    Loop, % LV_GetCount("Col")
+    {
+        NumPut(0, rect, 0)            ; LVIR_LABEL : 2, get label info constant
+        NumPut(A_Index, rect, 4)      ; 1-based subitem index (i think it is column)
+        SelectedRowNumberNew := SelectedRowNumber - 1
+        SendMessage, 0x1000+56, %SelectedRowNumberNew%, &rect, SysListView321, ahk_id %GuiID% ; LVM_GETSUBITEMRECT - 56, LVIR_BOUNDS - 0
+        x1 := NumGet(&rect, 0, "UInt"), y1 := NumGet(&rect,  4, "UInt")
+        x2 := NumGet(&rect, 8, "UInt"), y2 := NumGet(&rect, 12, "UInt")
+        ;~ PrintKV4("x1", x1, "y1", y1, "x2", x2, "y2", y2)
+        xmin := (xmin > x1 ? x1 : xmin)
+        ymin := (ymin > y1 ? y1 : ymin)
+        xmax := (xmax < x2 ? x2 : xmax)
+        ymax := (ymax < y2 ? y2 : ymax)        
+    }
+    Print4(xmin, ymin, xmax, ymax)
+    xmid := xmin + (xmax - xmin + 1) / 2
+    ymid := ymax + 21 + 2
+    Print2(xmid, ymid)
+    
+    ;~ Menu, ListViewContextMenu, Show, %A_GuiX%, %A_GuiY%
+    Menu, ListViewContextMenu, Show, %xmid%, %ymid%
+Return
+
+
+; -----------------------------------------------------------------------------
+; CloseWindow Handler
+; -----------------------------------------------------------------------------
+CloseWindowHandler:
+    PrintSub("CloseWindowHandler")
+    GetSelectedRowInfo()
+    windowID := Window%SelectedRowNumber%
+    TerminateWindow(windowID)
+Return
+
+
+; -----------------------------------------------------------------------------
+; KillProcess Handler: Kill process forcefully.
+; -----------------------------------------------------------------------------
+KillProcessHandler:
+    PrintSub("KillProcessHandler")
+    GetSelectedRowInfo()
+    procID := PID%SelectedRowNumber%
+    KillProcessForcefully(procID)
+Return
+
+
+; -----------------------------------------------------------------------------
+; CloseAllWindows Handler
+; -----------------------------------------------------------------------------
+CloseAllWindowsHandler:
+    PrintSub("CloseAllWindowsHandler")
+    Gosub, DisableIncrementalSearch
+
+    ; Prompts for confirmation before terminating
+    if (PromptTerminateAll) {
+        Gui, +OwnDialogs    ; To display a modal dialog
+        ;   0x4 : Yes/No
+        ;  0x20 : Icon Question
+        ; 0x100 : Makes the 2nd button the default
+        MsgBox, 292, AltTabAlternative: Close All Windows, Are you sure you want to close all windows?
+        IfMsgBox, No
+        {
+            return
+        }                
+    }
+
+    Loop, %Window_Found_Count%
+    {
+        windowID := Window%A_Index%
+        index := Window_Found_Count - A_Index + 1
+        PrintKV3("[CloseAllWindowsHandler] index", index, "PID", PID%index%, "windowTitle", WindowTitle%index%)
+        TerminateWindow(windowID)
+        LV_Delete(index)
+    }
+    
+    ; Set Window_Found_Count to 0, then only ListView gets updated with new windows
+    Window_Found_Count := 0
+    Gosub, EnableIncrementalSearch
+Return
+
+
+; -----------------------------------------------------------------------------
+; KillAllProcesses Handler: Kill all process forcefully.
+; -----------------------------------------------------------------------------
+KillAllProcessesHandler:
+    PrintSub("KillAllProcessesHandler")
+    Gosub, DisableIncrementalSearch
+
+    ; Prompts for confirmation before terminating
+    if (PromptTerminateAll) {
+        Gui, +OwnDialogs    ; To display a modal dialog
+        ;   0x4 : Yes/No
+        ;  0x20 : Icon Question
+        ; 0x100 : Makes the 2nd button the default
+        MsgBox, 292, AltTabAlternative: Kill All Processes, Are you sure you want to kill all processes?
+        IfMsgBox, No
+        {
+            return
+        }                
+    }
+
+    Loop, %Window_Found_Count%
+    {
+        windowID := Window%A_Index%
+        index := Window_Found_Count - A_Index + 1
+        PrintKV3("[KillAllProcessesHandler] index", index, "PID", PID%index%, "windowTitle", WindowTitle%index%)
+
+        KillProcessForcefully(PID%index%)
+        LV_Delete(index)
+    }
+    
+    ; Set Window_Found_Count to 0, then only ListView gets updated with new windows
+    Window_Found_Count := 0
+    Gosub, EnableIncrementalSearch
 Return
 
 
@@ -159,6 +365,11 @@ Return
 ; ExitApp
 ; -----------------------------------------------------------------------------
 ExitHandler:
+    MsgBox, 292, %ProductName%, Are you sure you want to exit?
+    IfMsgBox, No
+    {
+        return
+    }
     ExitApp
 
 
@@ -166,11 +377,19 @@ ExitHandler:
 ; RunAtStartup Handler
 ; -----------------------------------------------------------------------------
 RunAtStartupHandler:
-	Menu, Tray, Togglecheck, Run at startup
+	Menu, Tray, Togglecheck, Run At Startup
 	IfExist, %A_Startup%/%ProgramName%.lnk
 		FileDelete, %A_Startup%/%ProgramName%.lnk
 	else
         FileCreateShortcut, % H_Compiled ? A_AhkPath : A_ScriptFullPath, %A_Startup%/%ProgramName%.lnk
+Return
+
+
+; -----------------------------------------------------------------------------
+; CheckForUpdates Handler
+; -----------------------------------------------------------------------------
+CheckForUpdatesHandler:
+    CheckForUpdatesFunction(true)
 Return
 
 
@@ -192,6 +411,7 @@ Return
 ; Display About Dialog Box
 ; -----------------------------------------------------------------------------
 AboutHandler:
+    Gosub, AltTabAlternativeDestroy
     AboutDialog()
 Return
 
@@ -205,6 +425,7 @@ SettingsHotkeyHandler:
 Return
 
 SettingsHandler:
+    Gosub, AltTabAlternativeDestroy
     ShowSettingsDialog()
 Return
 
@@ -213,6 +434,7 @@ Return
 ; Display Release Notes dialog
 ; -----------------------------------------------------------------------------
 ReleaseNotesHandler:
+    Gosub, AltTabAlternativeDestroy
     ShowReleaseNotes()
 Return
 
@@ -226,6 +448,7 @@ HelpHotkeyHandler:
 Return
 
 HelpHandler:
+    Gosub, AltTabAlternativeDestroy
     ShowHelp()
 Return
 
@@ -234,6 +457,7 @@ Return
 ; Display ReadMe window
 ; -----------------------------------------------------------------------------
 ReadMeHandler:
+    Gosub, AltTabAlternativeDestroy
     ShowReadMe()
 Return
 
@@ -243,13 +467,17 @@ Return
 ; -----------------------------------------------------------------------------
 InitiateHotkeys:
     PrintSub("InitiateHotkeys")
-    AltHotKey       = !
-    AltHotKey2      = Alt
-    TabHotKey       = Tab
-    ShiftTabHotkey  = +Tab
-    EscHotKey       = Esc
-    HelpHotKey      = F1
-    SettingsHotKey  = F2
+    AltHotKey               = !
+    ShiftHotKey             = +
+    AltHotKey2              = Alt
+    TabHotKey               = Tab
+    ShiftTabHotkey          = +Tab
+    EscHotKey               = Esc
+    HelpHotKey              = F1
+    SettingsHotKey          = F2
+    HideWindowHotkey        = +NumpadSub
+    UnHideWindowHotkey      = +NumpadAdd
+    ShowHiddenWindowsHotkey = +NumpadMult
     
     PrintKV("AltHotkey", AltHotkey)
     PrintKV("TabHotkey", TabHotkey)
@@ -288,6 +516,9 @@ ToggleHotkeys(state)    ; (state = "On" or "Off")
 
     Hotkey, %AltHotkey%%TabHotkey%, AltTabAlternative, %state% UseErrorLevel
     Hotkey, %AltHotkey%%ShiftTabHotkey%, AltShiftTabAlternative, %state% UseErrorLevel
+    Hotkey, %AltHotkey%%HideWindowHotkey%, ATAHideWindow, %state% UseErrorLevel
+    Hotkey, %AltHotkey%%UnHideWindowHotkey%, ATAUnHideWindow, %state% UseErrorLevel
+    Hotkey, %AltHotkey%%ShowHiddenWindowsHotkey%, ATAShowHiddenWindows, %state% UseErrorLevel
 }
 
 
@@ -378,7 +609,7 @@ AltTabCommonFunction(direction)
     if (SelectedRowNumber < 1) {
         SelectedRowNumber := Window_Found_Count
     }
-    PrintKV("SelectedRowNumber", SelectedRowNumber)
+    PrintKV("[AltTabCommonFunction] SelectedRowNumber", SelectedRowNumber)
     LV_Modify(SelectedRowNumber, "Select Vis Focus") ; Get selected row and ensure selection & focus is visible
     Return
 }
@@ -402,6 +633,87 @@ Return
 
 
 ; -----------------------------------------------------------------------------
+; Hide Window
+; -----------------------------------------------------------------------------
+ATAHideWindow:
+    PrintLabel()
+    GetSelectedRowInfo()
+    windowID        := Window%SelectedRowNumber%        ; Store Window ID
+    ownerID         := WindowParent%SelectedRowNumber%  ; Store Parent ahk_id's to a list to later see if window is owned
+    windowTitle     := WindowTitle%SelectedRowNumber%   ; Store titles to a list
+    hw_popup        := hw_popup%SelectedRowNumber%      ; Store the active popup window to a list (eg the find window in notepad)
+    procName        := Exe_Name%SelectedRowNumber%      ; Store the process name
+    procPath        := Exe_Path%SelectedRowNumber%      ; Store the process path
+    procID          := PID%SelectedRowNumber%           ; Store the process id
+    Dialog          := Dialog%SelectedRowNumber%        ; S if found a Dialog window, else 0
+
+    
+    Print("[ATAHideWindow] SelectedRowNumber = " . SelectedRowNumber)
+    Print("[ATAHideWindow]          WindowID = " . windowID)
+    Print("[ATAHideWindow]           OwnerID = " . ownerID)
+    Print("[ATAHideWindow]       WindowTitle = " . windowTitle)
+    Print("[ATAHideWindow]          ProcName = " . procName)
+    Print("[ATAHideWindow]            ProcID = " . procID)
+    
+    WindowInfo := {}
+    WindowInfo.WindowID := windowID
+    WindowInfo.OwnerID  := ownerID
+    WindowInfo.Title    := windowTitle
+    WindowInfo.ProcName := procName
+    WindowInfo.ProcID   := procID
+    
+    HideWindow(windowID)
+    HiddenWindowsList[windowID] := WindowInfo
+    PrintWindowsInfoList("[ATAHideWindow] HiddenWindowsList", HiddenWindowsList)
+Return
+
+
+; -----------------------------------------------------------------------------
+; UnHide Window
+; -----------------------------------------------------------------------------
+ATAUnHideWindow:
+    PrintLabel()
+    GetSelectedRowInfo()
+    windowID        := Window%SelectedRowNumber%        ; Store Window ID
+    ownerID         := WindowParent%SelectedRowNumber%  ; Store Parent ahk_id's to a list to later see if window is owned
+    windowTitle     := WindowTitle%SelectedRowNumber%   ; Store titles to a list
+    hw_popup        := hw_popup%SelectedRowNumber%      ; Store the active popup window to a list (eg the find window in notepad)
+    procName        := Exe_Name%SelectedRowNumber%      ; Store the process name
+    procPath        := Exe_Path%SelectedRowNumber%      ; Store the process path
+    procID          := PID%SelectedRowNumber%           ; Store the process id
+    Dialog          := Dialog%SelectedRowNumber%        ; S if found a Dialog window, else 0
+
+    
+    Print("[ATAUnHideWindow] SelectedRowNumber = " . SelectedRowNumber)
+    Print("[ATAUnHideWindow]          WindowID = " . windowID)
+    Print("[ATAUnHideWindow]           OwnerID = " . ownerID)
+    Print("[ATAUnHideWindow]       WindowTitle = " . windowTitle)
+    Print("[ATAUnHideWindow]          ProcName = " . procName)
+    Print("[ATAUnHideWindow]            ProcID = " . procID)
+    
+    WindowInfo := {}
+    WindowInfo.WindowID := windowID
+    WindowInfo.OwnerID  := ownerID
+    WindowInfo.Title    := windowTitle
+    WindowInfo.ProcName := procName
+    WindowInfo.ProcID   := procID
+    
+    ShowWindow(windowID)
+    HiddenWindowsList.Delete(windowID)
+    PrintWindowsInfoList("[ATAHideWindow] HiddenWindowsList", HiddenWindowsList)
+Return
+
+
+; -----------------------------------------------------------------------------
+; Hide Window
+; -----------------------------------------------------------------------------
+ATAShowHiddenWindows:
+    PrintLabel()
+    ShowHiddenWindows := true
+Return
+
+
+; -----------------------------------------------------------------------------
 ; Initialize the settings to defaults
 ; -----------------------------------------------------------------------------
 InitializeDefaults:
@@ -415,6 +727,7 @@ InitializeDefaults:
     NumberBtnValue      := -1
     ActivateWindow      := false
     AltEscPressed       := 0
+    ShowHiddenWindows   := false
     ; -----------------------------------------------------------------------------
     ; Need to compute the WindowWidth & WindowHeightMax to display
     ; the AltTabAlternative window with changes without restarting
@@ -504,6 +817,7 @@ DisplayList:
     WinGet, windowList, list, , , Program Manager   ; gather a list of running programs
     Loop, %windowList%
     {
+        ;~ PrintKV("[DisplayList] A_Index", A_Index)
         ownerID := windowID := windowList%A_Index%
 
         Loop {
@@ -544,8 +858,10 @@ DisplayList:
                 {
                     Window_Found_Count += 1
                     if (ownerES) {
+                        ;~ Print("***************************** Getting icon from OwnerID *****************************")
                         GetWindowIcon(ownerID, UseLargeIconsCurrent)          ; (window id, whether to get large icons)
                     } else {
+                        ;~ Print("***************************** Getting icon from WindowID *****************************")
                         GetWindowIcon(windowID, UseLargeIconsCurrent)          ; (window id, whether to get large icons)
                     }
                     ;~ PrintKV3("WindowID", windowID, "OwnerID", ownerID, "title", title)
@@ -555,7 +871,20 @@ DisplayList:
                 }
             }
         }
+    } ; Loop ends here!
+
+    if (ShowHiddenWindows) {
+        HiddenWindowsListLen := GetDictLength(HiddenWindowsList)
+        PrintKV("[DisplayList] HiddenWindowsListLen", HiddenWindowsListLen)
+        for key, val in HiddenWindowsList {
+            Window_Found_Count += 1
+            GetWindowIcon(val.OwnerID, UseLargeIconsCurrent)          ; (window id, whether to get large icons)
+            WindowStoreAttributes(Window_Found_Count, val.WindowID, val.OwnerID)  ; Index, wid, parent (or blank if none)
+            LV_Add("Icon" . Window_Found_Count, "", Window_Found_Count, val.Title, val.ProcName)
+        }
     }
+    
+    PrintKV("[DisplayList] Window_Found_Count", Window_Found_Count)
 
     GuiControl, +Redraw, ListView1
     ;~ PrintKV("[DisplayList] SelectedRowNumber", SelectedRowNumber)
@@ -590,7 +919,7 @@ ListViewEvent:
         WinActivate, ahk_id %windowID%
         Gosub, AltTabAlternativeDestroy
     }
-    if A_GuiEvent = Normal          ; Mouse left-click
+    else if A_GuiEvent = Normal          ; Mouse left-click
     {
         LV_GetText(RowText, A_EventInfo)
         ;~ ToolTip You double-clicked row number %A_EventInfo%. Text: "%RowText%"        
@@ -602,6 +931,11 @@ ListViewEvent:
         ;~ WinActivate, ahk_id %windowID%
         ;~ Gosub, ListView_Destroy
     }
+    ;~ else if A_GuiEvent = RightClick          ; Mouse RightClick
+    ;~ {
+        ;~ Gosub, ListViewContextMenu
+        ;~ Return
+    ;~ }
     ;~ if A_GuiEvent = I               ; Item Changed
     ;~ {
         ;~ LV_GetText(RowText, A_EventInfo)
@@ -614,7 +948,7 @@ ListViewEvent:
         ;~ WinActivate, ahk_id %windowID%
         ;~ Gosub, ListView_Destroy
     ;~ }
-    if A_GuiEvent = K
+    else if A_GuiEvent = K
     {
         key := GetKeyName(Format("vk{:x}", A_EventInfo))
         PrintKV2("[K] A_EventInfo", A_EventInfo, "key", key)
@@ -626,6 +960,17 @@ ListViewEvent:
         PrintKV("IsShiftKeyDown", IsShiftKeyDown)
         
         vkCode := A_EventInfo        
+        ; -----------------------------------------------------------------------------
+        ; Handle AppsKey / Application Key / Menu Key
+        ; There is a problem, steps
+        ;   1. Display ContextMenu using AppsKey
+        ;   2. Left Mouse Click on ListView (not on ContextMenu)
+        ;   3. ContextMenu remains there, and AltTabAlternative is not closed.
+        ; -----------------------------------------------------------------------------
+        ;~ if (vkCode = GetKeyVK("AppsKey")) {
+            ;~ Gosub, ListViewContextMenu
+            ;~ Return
+        ;~ }
         ; -----------------------------------------------------------------------------
         ; Handle F1 Function Key
         ; -----------------------------------------------------------------------------
@@ -698,15 +1043,8 @@ ListViewEvent:
             ; *** Never kill explorer.exe forcefully
             if (exeName <> "explorer.exe" && IsShiftKeyDown) {
                 Print("Shift+Del pressed")
-                procID := PID%SelectedRowNumber%
-                PrintKV("Forcefully kill PID = ", procID)
-                KillCmd := "TASKKILL /PID " . procID . " /T /F"
-                PrintKV("KillCmd", KillCmd)
-                ;~ RunWait, %KillCmd%, , Hide
-                Run, %KillCmd%, , Hide
-                ;~ WinKill, ahk_id %ownerID%
+                KillProcessForcefully(procID)
                 Sleep, 50
-
             }
             else {
                 ; User ownerID to terminate window, otherwise topmost popwindow will be
@@ -760,7 +1098,13 @@ ListViewEvent:
                 ;   0x4 : Yes/No
                 ;  0x20 : Icon Question
                 ; 0x100 : Makes the 2nd button the default
-                MsgBox, 292, AltTabAlternative: Terminate All, Are you sure you want to terminate all processes?
+                if (IsShiftKeyDown) {
+                    MsgBox, 292, AltTabAlternative: Kill All Processes, Are you sure you want to kill all processes?
+                }
+                else {
+                    MsgBox, 292, AltTabAlternative: Close All Windows, Are you sure you want to close all windows?
+                }
+                
                 IfMsgBox, No
                 {
                     return
@@ -953,6 +1297,7 @@ GetSelectedRowInfo()
 ListViewResizeVertically(Gui_ID) ; Automatically resize listview vertically
 {
     Global Window_Found_Count, lv_h_win_2000_adj
+    PrintSub("ListViewResizeVertically")
     if (Window_Found_Count = 0) {
         itemsCount := 1
         LV_Add("", "", "", "", "")
@@ -963,7 +1308,7 @@ ListViewResizeVertically(Gui_ID) ; Automatically resize listview vertically
     
     SendMessage, 0x1000+31, 0, 0, SysListView321, ahk_id %Gui_ID% ; LVM_GETHEADER
     WinGetPos,,,, lv_header_h, ahk_id %ErrorLevel%
-    VarSetCapacity( rect, 16, 0 )
+    VarSetCapacity(rect, 16, 0)
     SendMessage, 0x1000+14, 0, &rect, SysListView321, ahk_id %Gui_ID% ; LVM_GETITEMRECT ; LVIR_BOUNDS
     ;~ Print("rect = " . &rect)
     y1 := 0
@@ -972,8 +1317,8 @@ ListViewResizeVertically(Gui_ID) ; Automatically resize listview vertically
     {
         ;~ Print("*( &rect + 3 + A_Index ) = " . *( &rect + 3 + A_Index ))
         ;~ Print("*( &rect + 11 + A_Index ) = " . *( &rect + 11 + A_Index ))
-        y1 += *( &rect + 3 + A_Index )
-        y2 += *( &rect + 11 + A_Index )
+        y1 += *(&rect + 3 + A_Index)
+        y2 += *(&rect + 11 + A_Index)
     }
     ;~ Print("y1 = " . y1)
     ;~ Print("y2 = " . y2)
@@ -1084,6 +1429,7 @@ Return
 OnKeyDown(wParam, lParam, msg, hwnd)
 {
     Global
+    PrintFunc(A_ThisFunc)
     ;~ Global ListView1
     key := Format("vk{1:x}", wParam)
     keyName := GetKeyName(key)
@@ -1407,6 +1753,12 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
                 }
             }
         }
+    } ; Loop ends here!
+    
+    if (ShowHiddenWindows) {
+        HiddenWindowsListLen := GetDictLength(HiddenWindowsList)
+        ;~ PrintKV("[GetWindowsCount] HiddenWindowsListLen", HiddenWindowsListLen)
+        windowFoundCount += HiddenWindowsListLen
     }
     
     return windowFoundCount
@@ -1415,6 +1767,16 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
 
 ; -----------------------------------------------------------------------------
 ; Terminate a process based on given WindowID
+;
+; Do NOT use WinClose, because
+;   WinClose sends a WM_CLOSE message to the target window, which is a somewhat
+;   forceful method of closing it. An alternate method of closing is to send the
+;   following message.
+;
+; It might produce different behavior because it is similar in effect to
+;   pressing Alt-F4 or clicking the window's close button in its title bar:
+;
+; Now, skype, jabber won't get killed on pressing NumpadDel key
 ; -----------------------------------------------------------------------------
 TerminateWindow(windowID) {
     ;~ WinClose, ahk_id %windowID%
@@ -1431,6 +1793,22 @@ KillProcessForcefully(procID) {
     KillCmd := "TASKKILL /PID " . procID . " /T /F"
     PrintKV("KillCmd", KillCmd)
     RunWait, %KillCmd%, , Hide
+}
+
+
+; -----------------------------------------------------------------------------
+; Hide Window
+; -----------------------------------------------------------------------------
+HideWindow(windowID) {
+    WinHide, ahk_id %windowID%
+}
+
+
+; -----------------------------------------------------------------------------
+; Show/UnHide Window
+; -----------------------------------------------------------------------------
+ShowWindow(windowID) {
+    WinShow, ahk_id %windowID%
 }
 
 

@@ -88,6 +88,9 @@ ShowSettingsDialog()
     SearchStringFontStyleIndex := GetFontStyleIndex(SearchStringFontStyle)
     ListViewFontStyleIndex := GetFontStyleIndex(ListViewFontStyle)
 
+    UpdateOptionsList := "Startup|Daily|Weekly|Never"
+    UpdateOptionsIndex := GetCheckForUpdatesIndex(UpdateOptionsList, CheckForUpdates)
+    
     SDGroupWidth 		:= 264
     SDGroupHeight 		:= 144
     SDTextCtrlFontSize 	:= 10
@@ -141,23 +144,26 @@ ShowSettingsDialog()
     Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewBkColorProgressText gSDListViewBkColorChangeBtnHandler
     ; -----------------------------------------------------------------------------
 
-    ColumnOffset := 123
+    ColumnOffset := 141
     ; -----------------------------------------------------------------------------
-    Gui, Add, GroupBox, xm Section vGeneralGroupBox W%SDGroupWidth% H108 cBlue, General
+    Gui, Add, GroupBox, xm Section vGeneralGroupBox W%SDGroupWidth% H132 cBlue, General
     ; -----------------------------------------------------------------------------
     Gui, Add, Checkbox, xs+5 ys+20 vSDPromptTerminateAllCheckBox gSDPromptTerminateAllCheckBoxHandler Checked%PromptTerminateAll%, &PromptTerminateAll
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6 , Window &Transparency
+    Gui, Add, Text, xs+5 y+6, Window &Transparency
     Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48
     Gui, Add, UpDown, vSDWindowTransparencyUpDown gSDWindowTransparencyUpDownHandler Range100-255, %WindowTransparency%
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6 , Window &Width (`%)
+    Gui, Add, Text, xs+5 y+6, Window &Width (`%)
     Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48
     Gui, Add, UpDown, vSDWindowWidthPercentageUpDown gSDWindowWidthPercentageUpDownHandler Range40-90, %WindowWidthPercentage%
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6 , Window &Height Max (`%)
+    Gui, Add, Text, xs+5 y+6, Window &Height Max (`%)
     Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48
     Gui, Add, UpDown, vSDWindowHeightMaxPercentageUpDown gSDWindowHeightMaxPercentageUpDownHandler Range10-90, %WindowHeightMaxPercentage%
+    ; -----------------------------------------------------------------------------
+    Gui, Add, Text, xs+5 y+6 vSDCheckForUpdatesText, Check for &updates
+    Gui, Add, DropDownList, xs+%ColumnOffset% yp-3 w60 vSDCheckForUpdatesDDL gSDCheckForUpdatesDDLHandler Choose%UpdateOptionsIndex%, %UpdateOptionsList%
     ; -----------------------------------------------------------------------------
     
     Gui, Add, Button, xm  w80 vSDOkBtn gOkBtnHandler hwndhSDOkBtn +Default, &OK
@@ -200,20 +206,6 @@ Return
 ; Save the modified settings from controls to the variables
 ; -----------------------------------------------------------------------------
 ApplySettings:
-    ;~ Gui, Submit, NoHide
-    ;~ PrintKV("SDSearchStringFontNameDDL", SDSearchStringFontNameDDL)
-    ;~ PrintKV("SDSearchStringFontSizeUpDown", SDSearchStringFontSizeUpDown)
-    ;~ PrintKV("SDSearchStringFontStyleDDL", SDSearchStringFontStyleDDL)
-    
-    ;~ PrintKV("SDListViewFontNameDDL", SDListViewFontNameDDL)
-    ;~ PrintKV("SDListViewFontSizeUpDown", SDListViewFontSizeUpDown)
-    ;~ PrintKV("SDListViewFontStyleDDL", SDListViewFontStyleDDL)
-    
-    ;~ PrintKV("SDPromptTerminateAllCheckBox", SDPromptTerminateAllCheckBox)
-    ;~ PrintKV("SDWindowTransparencyUpDown", SDWindowTransparencyUpDown)
-    ;~ PrintKV("SDWindowWidthPercentageUpDown", SDWindowWidthPercentageUpDown)
-    ;~ PrintKV("SDWindowHeightMaxPercentageUpDown", SDWindowHeightMaxPercentageUpDown)
-    
     GuiControlGet, SearchStringFontName, , SDSearchStringFontNameDDL
     GuiControlGet, SearchStringFontSize, , SDSearchStringFontSizeUpDown
     SearchStringFontColor := tSDSearchStringFontColor
@@ -229,6 +221,7 @@ ApplySettings:
     GuiControlGet, WindowTransparency, , SDWindowTransparencyUpDown
     GuiControlGet, WindowWidthPercentage, , SDWindowWidthPercentageUpDown
     GuiControlGet, WindowHeightMaxPercentage, , SDWindowHeightMaxPercentageUpDown
+    GuiControlGet, CheckForUpdates, , SDCheckForUpdatesDDL
 Return
 
 
@@ -245,6 +238,7 @@ SDApplyBtnHandler:
     ; Reload the settings to temp variables
     StoreSettingsInTempVariables()	
     CheckSettingsModified()
+    ApplyCheckForUpdatesChanges()
 Return
 
 
@@ -264,6 +258,7 @@ ResetBtnHandler:
     ; TODO: Need to reload the window with default settings
     Gui, SettingsDialog:Destroy
     ShowSettingsDialog()
+    ApplyCheckForUpdatesChanges()
 Return
 
 
@@ -279,6 +274,7 @@ ImportBtnHandler:
         ; TODO: Need to reload the window with default settings
         Gui, SettingsDialog:Destroy
         ShowSettingsDialog()
+        ApplyCheckForUpdatesChanges()
     }
 Return
 
@@ -293,6 +289,7 @@ OkBtnHandler:
         Gosub, ApplySettings
         PrintSettings()
         IniFileData("Write")
+        ApplyCheckForUpdatesChanges()
     }
     Gui, SettingsDialog:Destroy
 Return
@@ -454,24 +451,21 @@ SDWindowHeightMaxPercentageUpDownHandler:
     CheckSettingsModified()
 Return
 
+
+; -----------------------------------------------------------------------------
+; Check for updates handler
+; -----------------------------------------------------------------------------
+SDCheckForUpdatesDDLHandler:
+    GuiControlGet, tSDCheckForUpdates, , SDCheckForUpdatesDDL
+    CheckSettingsModified()
+Return
+
 } ; ShowSettingsDialog ends here!
 
 
 CheckSettingsModified() {
     Global
-    SettingsModified := (tSDSearchStringFontName != SearchStringFontName
-        or tSDSearchStringFontSize 	      != SearchStringFontSize
-        or tSDSearchStringFontColor       != SearchStringFontColor
-        or tSDSearchStringFontStyle       != SearchStringFontStyle
-        or tSDListViewFontName            != ListViewFontName
-        or tSDListViewFontSize            != ListViewFontSize
-        or tSDListViewFontColor           != ListViewFontColor
-        or tSDListViewFontStyle           != ListViewFontStyle
-        or tSDListViewBackgroundColor     != ListViewBackgroundColor	
-        or tSDPromptTerminateAll          != PromptTerminateAll
-        or tSDWindowTransparency          != WindowTransparency
-        or tSDWindowWidthPercentage       != WindowWidthPercentage
-        or tSDWindowHeightMaxPercentage   != WindowHeightMaxPercentage)
+    SettingsModified := IsSettingsModified()
     PrintKV("SettingsModified", SettingsModified)
 
     if (SettingsModified) {		
@@ -498,8 +492,9 @@ IsSettingsModified() {
         or tSDPromptTerminateAll          != PromptTerminateAll
         or tSDWindowTransparency          != WindowTransparency
         or tSDWindowWidthPercentage       != WindowWidthPercentage
-        or tSDWindowHeightMaxPercentage   != WindowHeightMaxPercentage)
-    PrintKV("SettingsModified", SettingsModified)
+        or tSDWindowHeightMaxPercentage   != WindowHeightMaxPercentage
+        or tSDCheckForUpdates             != CheckForUpdates)
+    ;~ PrintKV("SettingsModified", SettingsModified)
     return SettingsModified
 }
 
@@ -615,6 +610,7 @@ PromptTerminateAll=%PromptTerminateAllDefault%
 WindowTransparency=%WindowTransparencyDefault%
 WindowWidthPercentage=%WindowWidthPercentageDefault%
 WindowHeightMaxPercentage=%WindowHeightMaxPercentageDefault%
+CheckForUpdates=%CheckForUpdatesDefault%
     ), %SettingsINIFilePath%
 
     if (ErrorLevel != 0) {
@@ -669,6 +665,7 @@ IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
         ReadVariable("WindowTransparency",      	SettingsINIFilePathIn, "General",      "WindowTransparency",        WindowTransparencyDefault)
         ReadVariable("WindowWidthPercentage",   	SettingsINIFilePathIn, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
         ReadVariable("WindowHeightMaxPercentage",   SettingsINIFilePathIn, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
+        ReadVariable("CheckForUpdates",             SettingsINIFilePathIn, "General",      "CheckForUpdates",           CheckForUpdatesDefault)
     }
     else
     {
@@ -685,6 +682,7 @@ IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
         WriteVariable(WindowTransparency,           SettingsINIFilePathIn, "General",      "WindowTransparency",        WindowTransparencyDefault)
         WriteVariable(WindowWidthPercentage,        SettingsINIFilePathIn, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
         WriteVariable(WindowHeightMaxPercentage,    SettingsINIFilePathIn, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
+        WriteVariable(CheckForUpdates,              SettingsINIFilePathIn, "General",      "CheckForUpdates",           CheckForUpdatesDefault)
     }
 }
 
@@ -848,6 +846,7 @@ PrintSettings() {
     PrintKV("WindowTransparency", WindowTransparency)
     PrintKV("WindowWidthPercentage", WindowWidthPercentage)
     PrintKV("WindowHeightMaxPercentage", WindowHeightMaxPercentage)
+    PrintKV("CheckForUpdates", CheckForUpdates)
 }
 
 
@@ -869,6 +868,7 @@ PrintDefaultSettings() {
     PrintKV("WindowTransparencyDefault", WindowTransparencyDefault)
     PrintKV("WindowWidthPercentageDefault", WindowWidthPercentageDefault)
     PrintKV("WindowHeightMaxPercentageDefault", WindowHeightMaxPercentageDefault)
+    PrintKV("CheckForUpdatesDefault", CheckForUpdatesDefault)
 }
 
 
@@ -889,6 +889,20 @@ GetFontStyleIndex(fontStyleIn) {
         }
     }
     Return fontStyleIndex
+}
+
+GetCheckForUpdatesIndex(UpdateOptionsList, updateIn) {
+    updateIndex := 0
+    loopIndex := 0
+    Loop Parse, UpdateOptionsList, |
+    {
+        ++loopIndex
+        if (updateIndex = 0 and updateIn = A_LoopField) {
+            updateIndex := loopIndex
+            ;~ Print("MatchFound")
+        }
+    }
+    Return updateIndex
 }
 
 
@@ -915,6 +929,7 @@ StoreSettingsInTempVariables() {
     tSDWindowTransparency          := WindowTransparency
     tSDWindowWidthPercentage       := WindowWidthPercentage
     tSDWindowHeightMaxPercentage   := WindowHeightMaxPercentage
+    tSDCheckForUpdates             := CheckForUpdates
 }
 
 
@@ -937,6 +952,162 @@ DefineDefaultSettings() {
     WindowTransparencyDefault           := 222
     WindowWidthPercentageDefault        := 45
     WindowHeightMaxPercentageDefault    := 50
+    CheckForUpdatesDefault              := "Weekly"
+}
+
+
+; -----------------------------------------------------------------------------
+; RunCheckForUpdates
+; -----------------------------------------------------------------------------
+RunCheckForUpdates() {
+    Global
+    PrintSub("RunCheckForUpdates")
+    StopCheckForUpdates()
+    PrintKV("CheckForUpdates", CheckForUpdates)
+
+    if (CheckForUpdates = "Startup") {
+        CheckForUpdatesFunction(false)
+        Return
+    }
+    else if (CheckForUpdates = "Never") {
+        Return
+    }
+    else {
+        ApplyCheckForUpdatesChanges()
+    }
+}
+
+; -----------------------------------------------------------------------------
+; Apply CheckForUpdates Changes
+; -----------------------------------------------------------------------------
+ApplyCheckForUpdatesChanges() {
+    Global
+    PrintSub("ApplyCheckForUpdatesChanges")
+    StopCheckForUpdates()
+    PrintKV("CheckForUpdates", CheckForUpdates)
+
+    if (CheckForUpdates = "Startup" or CheckForUpdates = "Never") {
+        Return
+    }
+    else {
+        ; Daily or Weekly so proceed further.
+    }
+
+    SetTimer, CheckForUpdatesLabel, 3600000 ; Check to CheckForUpdates for every hour
+    ; Do NOT quit immediately, run CheckForUpdatesLabel once and return.
+    ;~ Return
+
+    CheckForUpdatesLabel:
+        PrintSub("CheckForUpdatesLabel")
+        FileRead, checkForUpdatesLastRun, %CheckForUpdatesFilePath%
+        if (!checkForUpdatesLastRun) {
+            file := FileOpen(CheckForUpdatesFilePath, "w")
+            file.Write(A_Now)
+            file.Close()            
+            checkForUpdatesLastRun := A_Now
+        }
+        PrintKV("checkForUpdatesLastRun", checkForUpdatesLastRun)
+        daysDiff := A_Now
+        EnvSub, daysDiff, %checkForUpdatesLastRun%, Days
+        PrintKV("daysDiff", daysDiff)      
+
+        if (CheckForUpdates = "Daily" and daysDiff >= 1) {
+            CheckForUpdatesFunction(false)
+        }
+        else if (CheckForUpdates = "Weekly" and daysDiff >= 7) {
+            CheckForUpdatesFunction(false)
+        }        
+    Return
+}
+
+StopCheckForUpdates() {
+    Global
+    SetTimer, CheckForUpdatesLabel, Off
+}
+
+; -----------------------------------------------------------------------------
+; Check for updates
+; Param ShowNoUpdatesMsgBox: Doesn't display "No updates available" msgbox if
+;   updates are not available.
+; For example: If user sets Hourly to "Check for updates", it's not good to
+;   display "No updates available" msgbox every hour (each time).
+; -----------------------------------------------------------------------------
+CheckForUpdatesFunction(ShowNoUpdatesMsgBox=false) {
+    Global ProgramName, ProductVersion, UpdateFileURL, ProductPage, CheckForUpdatesFilePath
+    PrintSub("CheckForUpdatesFunction")
+    MouseGetPos, xpos, ypos
+    ;~ PrintKV2("xpos", xpos, "ypos", ypos)
+    Tooltip, Checking for Updates......`, please wait, xpos, ypos, 1
+    
+    ATALatestVersionFile := A_Temp . "\ata_latestversion.txt"
+    URLDownloadToFile, %UpdateFileURL%, %ATALatestVersionFile%
+    Tooltip
+
+    if (!FileExist(ATALatestVersionFile)) {
+        MsgBox, 0x0, AltTabAlternative, Failed to download %UpdateFileURL%
+        Return
+    }
+
+    latestVersionChanges := "`n`nCHANGES`n"
+    FileRead, temp, %ATALatestVersionFile%
+    Loop, parse, temp, `n, `r
+    {
+        if (A_index = 1) {
+            latestVersion := A_LoopField
+        }
+        else {
+            latestVersionChanges .= "`n" A_LoopField
+        }
+    }
+    FileDelete, %ATALatestVersionFile%
+
+    if (!IsLatestRelease(ProductVersion, latestVersion)) {
+		MsgBox, 64, %ProgramName% Update Available, % "Your Version: `t" ProductVersion "`nLatest Version: `t" latestVersion . latestVersionChanges
+		IfMsgBox OK
+			Run, %ProductPage%
+    }
+	else {
+        if (ShowNoUpdatesMsgBox) {
+            MsgBox, 64, %ProgramName%, No updates available
+        }
+    }
+    
+    ; Write the lastrun for CheckForUpdates to file
+    Print("Updating " . CheckForUpdatesFilePath)
+    file := FileOpen(CheckForUpdatesFilePath, "w")
+    file.Write(A_Now)
+    file.Close()
+}
+
+
+; -----------------------------------------------------------------------------
+; Check for updates
+; ProgramVersion : Current version of the running application
+; CurrentVersion : Latest version available on net
+; Returns:
+;    True - if ProgramVersion > CurrentVersion
+;   False - otherwise
+; -----------------------------------------------------------------------------
+IsLatestRelease(programVersion, currentVersion) {
+	StringSplit, programVersionArray, programVersion, `.
+	StringSplit, currentVersionArray, currentVersion, `.    
+
+	Loop % currentVersionArray0 - programVersionArray0
+    {
+		var := programVersionArray0 + A_index, programVersionArray%var% := 0
+    }
+
+	Loop % currentVersionArray0
+    {
+		if (programVersionArray%A_index% < currentVersionArray%A_index%) {
+			return false
+        }
+		else if (programVersionArray%A_index% > currentVersionArray%A_index%) {
+            ; in case currentVersion supplied is of old file
+			return true
+        }
+    }
+	return true
 }
 
 
