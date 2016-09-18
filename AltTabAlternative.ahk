@@ -43,6 +43,10 @@ SettingsINIFileName     := "AltTabAlternativeSettings.ini"
 SettingsINIFilePath     := SettingsDirPath . "\" . SettingsINIFileName
 CheckForUpdatesFileName := "CheckForUpdates.txt"
 CheckForUpdatesFilePath := SettingsDirPath . "\" . CheckForUpdatesFileName
+HiddenWindowsFileName   := "HiddenWindows.txt"
+HiddenWindowsFilePath   := SettingsDirPath . "\" . "HiddenWindows.txt"
+HiddenWindowsFile_ID    := "ATAHW"
+HiddenWindowsFile_Cols  := 5
 
 TrayIcon                := "AltTabAlternative.ico"
 ApplicationName         := ProductName
@@ -54,6 +58,11 @@ ReleaseNotesFileName    := "ReleaseNotes.txt"
 
 ; -----------------------------------------------------------------------------
 ; ::Global Variables
+;
+; *** HiddenWindowsList ***
+; Do NOT worry about the deletion of windows from the HiddenWindowsList,
+;   GetWindowsCount function will take care of it. Window info will be deleted
+;   if any hidden window doesn't exist.
 ; -----------------------------------------------------------------------------
 Global CurSearchString          := ""
 Global NewSearchString          := ""
@@ -69,6 +78,7 @@ Global HotkeysDisabled          := false
 Global ActivateWindow           := false
 Global HiddenWindowsList        := {}
 Global ShowHiddenWindows        := false
+
 
 
 ; -----------------------------------------------------------------------------
@@ -134,7 +144,11 @@ Tooltip, Installing %ATAPRODUCTNAME% ......`, please wait, xpos, ypos, 1
 Sleep, 100
 ToolTip
 
+; Initiate Hotkeys
 Gosub, InitiateHotkeys
+
+; Read the hidden windows if there are any
+Gosub, HiddenWindowsFileOpen
 
 ; Menu Stuff
 
@@ -156,6 +170,16 @@ Menu, Tray, Add  ; Separator
 Menu, Tray, Add, Exit, ExitHandler
 Menu, Tray, Tip, % ProgramName " " ProductVersion
 Menu, Tray, Default, About %ATAPRODUCTNAME%
+
+
+; -----------------------------------------------------------------------------
+; Create HiddenWindowsFilePath file if not exists
+; -----------------------------------------------------------------------------
+IfNotExist, %HiddenWindowsFilePath%
+{
+    CSV_Create(HiddenWindowsFilePath, HiddenWindowsFile_Cols, HiddenWindowsFile_ID)
+    CSV_Save(HiddenWindowsFilePath, HiddenWindowsFile_ID)
+}
 
 
 ; -----------------------------------------------------------------------------
@@ -467,17 +491,17 @@ Return
 ; -----------------------------------------------------------------------------
 InitiateHotkeys:
     PrintSub("InitiateHotkeys")
-    AltHotKey               = !
-    ShiftHotKey             = +
-    AltHotKey2              = Alt
-    TabHotKey               = Tab
-    ShiftTabHotkey          = +Tab
-    EscHotKey               = Esc
-    HelpHotKey              = F1
-    SettingsHotKey          = F2
-    HideWindowHotkey        = +NumpadSub
-    UnHideWindowHotkey      = +NumpadAdd
-    ShowHiddenWindowsHotkey = +NumpadMult
+    AltHotKey                 = !
+    ShiftHotKey               = +
+    AltHotKey2                = Alt
+    TabHotKey                 = Tab
+    ShiftTabHotkey            = +Tab
+    EscHotKey                 = Esc
+    HelpHotKey                = F1
+    SettingsHotKey            = F2
+    HideWindowHotkey          = +NumpadSub
+    UnHideWindowHotkey        = +NumpadAdd
+    ToggleHiddenWindowsHotkey = +NumpadMult
     
     PrintKV("AltHotkey", AltHotkey)
     PrintKV("TabHotkey", TabHotkey)
@@ -518,7 +542,7 @@ ToggleHotkeys(state)    ; (state = "On" or "Off")
     Hotkey, %AltHotkey%%ShiftTabHotkey%, AltShiftTabAlternative, %state% UseErrorLevel
     Hotkey, %AltHotkey%%HideWindowHotkey%, ATAHideWindow, %state% UseErrorLevel
     Hotkey, %AltHotkey%%UnHideWindowHotkey%, ATAUnHideWindow, %state% UseErrorLevel
-    Hotkey, %AltHotkey%%ShowHiddenWindowsHotkey%, ATAShowHiddenWindows, %state% UseErrorLevel
+    Hotkey, %AltHotkey%%ToggleHiddenWindowsHotkey%, ATAToggleHiddenWindows, %state% UseErrorLevel
 }
 
 
@@ -589,6 +613,7 @@ AltTabCommonFunction(direction)
         Gosub, DisplayList
         Gosub, GuiResizeAndPosition
         Gosub, ShowWindow
+        ;~ Gosub, HiddenWindowsFileOpen
         ToggleAltEscHotkey("On")
     }
 
@@ -639,6 +664,14 @@ ATAHideWindow:
     PrintLabel()
     GetSelectedRowInfo()
     windowID        := Window%SelectedRowNumber%        ; Store Window ID
+
+    if (HiddenWindowsList.HasKey(windowID)) {
+        Print("[ATAHideWindow] ERROR: This is a hidden window.")
+        Return
+    }
+
+    Gosub, DisableIncrementalSearch
+
     ownerID         := WindowParent%SelectedRowNumber%  ; Store Parent ahk_id's to a list to later see if window is owned
     windowTitle     := WindowTitle%SelectedRowNumber%   ; Store titles to a list
     hw_popup        := hw_popup%SelectedRowNumber%      ; Store the active popup window to a list (eg the find window in notepad)
@@ -647,13 +680,14 @@ ATAHideWindow:
     procID          := PID%SelectedRowNumber%           ; Store the process id
     Dialog          := Dialog%SelectedRowNumber%        ; S if found a Dialog window, else 0
 
-    
+    Print("[ATAHideWindow] ---------------------------------------------")
     Print("[ATAHideWindow] SelectedRowNumber = " . SelectedRowNumber)
     Print("[ATAHideWindow]          WindowID = " . windowID)
     Print("[ATAHideWindow]           OwnerID = " . ownerID)
     Print("[ATAHideWindow]       WindowTitle = " . windowTitle)
     Print("[ATAHideWindow]          ProcName = " . procName)
     Print("[ATAHideWindow]            ProcID = " . procID)
+    Print("[ATAHideWindow] ---------------------------------------------")
     
     WindowInfo := {}
     WindowInfo.WindowID := windowID
@@ -665,6 +699,8 @@ ATAHideWindow:
     HideWindow(windowID)
     HiddenWindowsList[windowID] := WindowInfo
     PrintWindowsInfoList("[ATAHideWindow] HiddenWindowsList", HiddenWindowsList)
+    PrintWindowInfo(WindowInfo)
+    Gosub, EnableIncrementalSearch
 Return
 
 
@@ -674,42 +710,47 @@ Return
 ATAUnHideWindow:
     PrintLabel()
     GetSelectedRowInfo()
-    windowID        := Window%SelectedRowNumber%        ; Store Window ID
-    ownerID         := WindowParent%SelectedRowNumber%  ; Store Parent ahk_id's to a list to later see if window is owned
-    windowTitle     := WindowTitle%SelectedRowNumber%   ; Store titles to a list
-    hw_popup        := hw_popup%SelectedRowNumber%      ; Store the active popup window to a list (eg the find window in notepad)
-    procName        := Exe_Name%SelectedRowNumber%      ; Store the process name
-    procPath        := Exe_Path%SelectedRowNumber%      ; Store the process path
-    procID          := PID%SelectedRowNumber%           ; Store the process id
-    Dialog          := Dialog%SelectedRowNumber%        ; S if found a Dialog window, else 0
+    windowID        := Window%SelectedRowNumber%
+    if (!HiddenWindowsList.HasKey(windowID)) {
+        Print("[ATAUnHideWindow] ERROR: This is NOT a hidden window.")
+        Return
+    }
 
-    
+    Gosub, DisableIncrementalSearch
+
+    WindowInfo      := HiddenWindowsList[windowID]
+    ownerID         := WindowInfo.OwnerID
+    windowTitle     := WindowInfo.Title
+    procName        := WindowInfo.ProcName
+    procID          := WindowInfo.ProcID
+
+    Print("[ATAUnHideWindow] ---------------------------------------------")
     Print("[ATAUnHideWindow] SelectedRowNumber = " . SelectedRowNumber)
     Print("[ATAUnHideWindow]          WindowID = " . windowID)
     Print("[ATAUnHideWindow]           OwnerID = " . ownerID)
     Print("[ATAUnHideWindow]       WindowTitle = " . windowTitle)
     Print("[ATAUnHideWindow]          ProcName = " . procName)
     Print("[ATAUnHideWindow]            ProcID = " . procID)
-    
-    WindowInfo := {}
-    WindowInfo.WindowID := windowID
-    WindowInfo.OwnerID  := ownerID
-    WindowInfo.Title    := windowTitle
-    WindowInfo.ProcName := procName
-    WindowInfo.ProcID   := procID
+    Print("[ATAUnHideWindow] ---------------------------------------------")
     
     ShowWindow(windowID)
     HiddenWindowsList.Delete(windowID)
-    PrintWindowsInfoList("[ATAHideWindow] HiddenWindowsList", HiddenWindowsList)
+    PrintWindowsInfoList("[ATAUnHideWindow] HiddenWindowsList", HiddenWindowsList)
+    Gosub, EnableIncrementalSearch
+    
+    ; By showing the window, hidden window becomes active window
+    ; So, activate AltTabAlternative
+    WinActivate, ahk_id %MainWindowHwnd%
 Return
 
 
 ; -----------------------------------------------------------------------------
 ; Hide Window
 ; -----------------------------------------------------------------------------
-ATAShowHiddenWindows:
+ATAToggleHiddenWindows:
     PrintLabel()
-    ShowHiddenWindows := true
+    ShowHiddenWindows := not ShowHiddenWindows
+    PrintKV("ShowHiddenWindows", ShowHiddenWindows)
 Return
 
 
@@ -874,14 +915,24 @@ DisplayList:
     } ; Loop ends here!
 
     if (ShowHiddenWindows) {
+        DetectHiddenWindows, On
         HiddenWindowsListLen := GetDictLength(HiddenWindowsList)
         PrintKV("[DisplayList] HiddenWindowsListLen", HiddenWindowsListLen)
-        for key, val in HiddenWindowsList {
-            Window_Found_Count += 1
-            GetWindowIcon(val.OwnerID, UseLargeIconsCurrent)          ; (window id, whether to get large icons)
-            WindowStoreAttributes(Window_Found_Count, val.WindowID, val.OwnerID)  ; Index, wid, parent (or blank if none)
-            LV_Add("Icon" . Window_Found_Count, "", Window_Found_Count, val.Title, val.ProcName)
+        for WindowID, WindowInfo in HiddenWindowsList {
+            if (IsHiddenWindowExist(WindowInfo.WindowID)) {
+                PrintKV("[DisplayList] WindowID", DecimalToHex(WindowID))
+                PrintKV("[DisplayList] OwnerID", val.OwnerID)
+                PrintWindowInfo(HiddenWindowsList[WindowID])
+                Window_Found_Count += 1
+                GetWindowIcon(val.OwnerID, UseLargeIconsCurrent)          ; (window id, whether to get large icons)
+                WindowStoreAttributes(Window_Found_Count, val.WindowID, val.OwnerID)  ; Index, wid, parent (or blank if none)
+                LV_Add("Icon" . Window_Found_Count, "", Window_Found_Count, val.Title, val.ProcName)
+            }
+            else {
+                HiddenWindowsList.Delete(WindowID)
+            }
         }
+        DetectHiddenWindows, Off
     }
     
     PrintKV("[DisplayList] Window_Found_Count", Window_Found_Count)
@@ -1059,6 +1110,7 @@ ListViewEvent:
                 ; Now, skype, jabber won't get killed on pressing NumpadDel key
                 ;~ WinClose, ahk_id %ownerID%
                 ;~ PostMessage, 0x112, 0xF060, , , ahk_id %windowID%  ; 0x112 = WM_SYSCOMMAND, 0xF060 = SC_CLOSE
+                Print("A_DetectHiddenWindows = " . A_DetectHiddenWindows)
                 TerminateWindow(windowID)
                 Sleep, 50
             }
@@ -1210,6 +1262,9 @@ AltTabAlternativeDestroy:
     Gosub, DisableTimers
     ToggleAltEscHotkey("Off")
     
+    ; Save the hidden windows information into file
+    Gosub, HiddenWindowsFileSave
+    
     ; First check for AltEsc
     if (AltEscPressed = 1) {
         Gui, 1: Destroy
@@ -1255,7 +1310,7 @@ GuiCenterX()
 ; -----------------------------------------------------------------------------
 ; Store the windowID, Process Name/Path/ID and etc of the given WindowID.
 ; -----------------------------------------------------------------------------
-WindowStoreAttributes(index, windowID, ID_Parent) 
+WindowStoreAttributes(index, windowID, ownerID) 
 {
     Local State_temp
     ;~ PrintSub("WindowStoreAttributes")
@@ -1265,13 +1320,22 @@ WindowStoreAttributes(index, windowID, ID_Parent)
     WinGet, procID, PID, ahk_id %windowID%
     
     Window%index%        := windowID        ; Store ahk_id's to a list
-    WindowParent%index%  := ID_Parent       ; Store Parent ahk_id's to a list to later see if window is owned
+    WindowParent%index%  := ownerID         ; Store Parent ahk_id's to a list to later see if window is owned
     WindowTitle%index%   := windowTitle     ; Store titles to a list
     hw_popup%index%      := hw_popup        ; Store the active popup window to a list (eg the find window in notepad)
     Exe_Name%index%      := procName        ; Store the process name
     Exe_Path%index%      := procPath        ; Store the process path
     PID%index%           := procID          ; Store the process id
     Dialog%index%        := Dialog          ; S if found a Dialog window, else 0
+
+    ;~ Print("[WindowStoreAttributes] -------------------------------------------")
+    ;~ Print("[WindowStoreAttributes]       Index = " . index)
+    ;~ Print("[WindowStoreAttributes]    WindowID = " . windowID)
+    ;~ Print("[WindowStoreAttributes]     OwnerID = " . ownerID)
+    ;~ Print("[WindowStoreAttributes] WindowTitle = " . windowTitle)
+    ;~ Print("[WindowStoreAttributes]    ProcName = " . procName)
+    ;~ Print("[WindowStoreAttributes]      ProcID = " . procID)
+    ;~ Print("[WindowStoreAttributes] -------------------------------------------")
 }
 
 
@@ -1682,6 +1746,8 @@ LV_SetSI(hList, iItem, iSubItem, iImage) {
 
 ; -----------------------------------------------------------------------------
 ; Returns the number of windows
+; Do NOT worry about the deletion of windows from the HiddenWindowsList, this
+;   function will take care of it.
 ; -----------------------------------------------------------------------------
 GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
     Global WS_EX_APPWINDOW, WS_EX_TOOLWINDOW, GW_OWNER
@@ -1756,11 +1822,20 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
     } ; Loop ends here!
     
     if (ShowHiddenWindows) {
-        HiddenWindowsListLen := GetDictLength(HiddenWindowsList)
-        ;~ PrintKV("[GetWindowsCount] HiddenWindowsListLen", HiddenWindowsListLen)
-        windowFoundCount += HiddenWindowsListLen
+        ;~ HiddenWindowsListLen := GetDictLength(HiddenWindowsList)
+        ;~ PrintKV("[GetWindowsCount] HiddenWindowsListLen", HiddenWindowsListLen)        
+        DetectHiddenWindows, On
+        for WindowID, WindowInfo in HiddenWindowsList {
+            if (IsHiddenWindowExist(WindowInfo.WindowID)) {
+                windowFoundCount += 1
+            }
+            else {
+                HiddenWindowsList.Delete(WindowID)
+            }
+        }
+        DetectHiddenWindows, Off
     }
-    
+
     return windowFoundCount
 }
 
@@ -1813,6 +1888,145 @@ ShowWindow(windowID) {
 
 
 ; -----------------------------------------------------------------------------
+; Create RowData record from WindowInfo structure
+; WindowInfo Definition
+;   WindowInfo := {}
+;   WindowInfo.WindowID := 0xd066c
+;   WindowInfo.OwnerID  := 0xd066c
+;   WindowInfo.Title    := "Untitled - Notepad, Lokesh Govindu"
+;   WindowInfo.ProcName := "notepad.exe"
+;   WindowInfo.ProcID   := 7740
+; -----------------------------------------------------------------------------
+CreateHiddenWindowRowData(wi)
+{
+    rowdata := wi.WindowID . "," . wi.OwnerID . "," . Format4CSV(wi.Title) . "," . Format4CSV(wi.ProcName) . "," . wi.ProcID
+    return rowdata
+}
+
+
+; -----------------------------------------------------------------------------
+; Print WindowInfo on stdout
+; -----------------------------------------------------------------------------
+PrintWindowInfo(wi) {
+    Print("[PrintWindowInfo] ---------------------------------------------")
+    Print("[PrintWindowInfo]     WindowID = " . wi.WindowID)
+    Print("[PrintWindowInfo]      OwnerID = " . wi.OwnerID)
+    Print("[PrintWindowInfo]  WindowTitle = " . wi.Title)
+    Print("[PrintWindowInfo]     ProcName = " . wi.ProcName)
+    Print("[PrintWindowInfo]       ProcID = " . wi.ProcID)
+    Print("[PrintWindowInfo] ---------------------------------------------")
+}
+
+; -----------------------------------------------------------------------------
+; Open HiddenWindowFile
+; -----------------------------------------------------------------------------
+HiddenWindowsFileOpen:
+    PrintSub("HiddenWindowsFileOpen")
+    HiddenWindowsFileOpenFun()
+Return
+
+HiddenWindowsFileOpenFun()
+{
+    Global HiddenWindowsFilePath
+    Global HiddenWindowsFile_ID
+    Global HiddenWindowsList := {}
+    PrintSub("HiddenWindowsFileOpenFun")
+    
+    CSV_Load(HiddenWindowsFilePath, HiddenWindowsFile_ID)
+    nRows := CSV_TotalRows(HiddenWindowsFile_ID)
+    nCols := CSV_TotalCols(HiddenWindowsFile_ID)
+    PrintKV2("Rows", nRows, "Cols", nCols)
+    Loop, % nRows {
+        row := A_Index
+        WindowInfo := {}
+        WindowInfo.WindowID := CSV_ReadCell(HiddenWindowsFile_ID, row, 1)
+        WindowInfo.OwnerID  := CSV_ReadCell(HiddenWindowsFile_ID, row, 2)
+        WindowInfo.Title    := CSV_ReadCell(HiddenWindowsFile_ID, row, 3)
+        WindowInfo.ProcName := CSV_ReadCell(HiddenWindowsFile_ID, row, 4)
+        WindowInfo.ProcID   := CSV_ReadCell(HiddenWindowsFile_ID, row, 5)
+        if (IsHiddenWindowExist(WindowInfo.WindowID)) {
+            PrintWindowInfo(windowInfo)
+            HiddenWindowsList[WindowInfo.WindowID] := WindowInfo
+            PrintWindowsInfoList("[HiddenWindowsFileOpenFun] HiddenWindowsList", HiddenWindowsList)        
+        }
+        else {
+            Print("[HiddenWindowsFileOpenFun] Window does NOT exist. WindowID = " . WindowInfo.WindowID)
+        }
+    }
+}
+
+; -----------------------------------------------------------------------------
+; Close/Save HiddenWindowFile
+; -----------------------------------------------------------------------------
+HiddenWindowsFileSave:
+HiddenWindowsFileClose:
+    PrintLabel()
+    FileDelete, %HiddenWindowsFilePath%
+    CSV_Create(HiddenWindowsFilePath, HiddenWindowsFile_Cols, HiddenWindowsFile_ID)
+    for windowID, windowInfo in HiddenWindowsList {
+        RowData := CreateHiddenWindowRowData(windowInfo)
+        PrintKV("RowData", RowData)
+        CSV_AddRow(HiddenWindowsFile_ID, RowData)
+    }
+    CSV_Save(HiddenWindowsFilePath, HiddenWindowsFile_ID)
+Return
+
+HiddenWindowsFileSaveFun()
+{
+    Global HiddenWindowsFilePath
+    Global HiddenWindowsFile_ID
+    Global HiddenWindowsList := {}
+    PrintSub("HiddenWindowsFileSaveFun")
+
+    ; Delete existing file and re-write the contents
+    FileDelete, %HiddenWindowsFilePath%
+    
+    CSV_Create(HiddenWindowsFilePath, HiddenWindowsFile_Cols, HiddenWindowsFile_ID)
+    for windowID, windowInfo in HiddenWindowsList {
+        ; Skip the windows those do NOT exist
+        if (IsHiddenWindowExist(WindowInfo.WindowID)) {        
+            RowData := CreateHiddenWindowRowData(windowInfo)
+            PrintKV("RowData", RowData)
+            CSV_AddRow(HiddenWindowsFile_ID, RowData)
+        }
+    }
+    CSV_Save(HiddenWindowsFilePath, HiddenWindowsFile_ID)
+}
+
+; -----------------------------------------------------------------------------
+; Returns 
+;   True if hidden window exists
+;   False otherwise.
+; Note: Hidden windows cannot be detected if DetectHiddenWindows is Off
+; -----------------------------------------------------------------------------
+IsHiddenWindowExist(WindowID)
+{
+    prevState := A_DetectHiddenWindows
+    DetectHiddenWindows, On
+    exists := IsWindowExist(WindowID)
+    DetectHiddenWindows, %prevState%
+    return exists
+}
+
+; -----------------------------------------------------------------------------
+; Returns 
+;   True if window exists
+;   False otherwise.
+; -----------------------------------------------------------------------------
+IsWindowExist(WindowID)
+{
+    exists := false
+    if (WinExist("ahk_id " WindowID)) {
+        exists := true
+    }
+    else {
+        exists := false
+    }
+    return exists
+}
+
+
+; -----------------------------------------------------------------------------
 ; Include files
 ; -----------------------------------------------------------------------------
 #Include %A_ScriptDir%\CommonUtils.ahk
@@ -1821,3 +2035,4 @@ ShowWindow(windowID) {
 #Include %A_ScriptDir%\Help.ahk
 #Include %A_ScriptDir%\ReleaseNotes.ahk
 #Include %A_ScriptDir%\SettingsDialog.ahk
+#Include %A_ScriptDir%\CSVLib.ahk

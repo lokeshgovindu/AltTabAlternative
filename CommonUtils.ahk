@@ -98,7 +98,7 @@ PrintWindowsInfoList(str, dict) {
     for key, val in dict {
         kv := Format("(0x{:x}, {}), ", key, val)
         FileAppend, % kv, *
-   }
+    }
     FileAppend, }`n, *
 }
 
