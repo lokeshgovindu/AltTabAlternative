@@ -50,8 +50,7 @@ Known Limitations
 
 Known Issues
 ------------
-- Process is terminated on pressing Del key instead of default action on that
-  window. Ex: Skype, Cicso Jabber.
+- Available @ https://sourceforge.net/p/alttabalternative/tickets/
 
 
 Credits:

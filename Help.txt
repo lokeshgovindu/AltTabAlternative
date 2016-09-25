@@ -27,25 +27,62 @@ x-----------------------------------------------------------------------------x
 |----------------------+------------------------------------------------------|
 | F1 (FunctionKey)     | Display help file in viewer.                         |
 | F2 (FunctionKey)     | Display settings dialog.                             |
+|----------------------+------------------------------------------------------|
+| Shift+NumpadSub (-)  | Hide the selected window.                            |
+| Shift+NumpadAdd (+)  | Unhide the selected window.                          |
+| Shift+NumpadMult (*) | Toggle hidden windows.                               |
+|                      | Note: NOT added these hidden features in ContextMenu |
+|                      |   intentionally.                                     |
 x-----------------------------------------------------------------------------x
 |                                                                             |
 |                                                                             |
 | Tray Menu                                                                   |
 | ---------                                                                   |
 |                                                                             |
-| +---------------+                                                           |
-| | About         | - Displays AboutDialog                                    |
-| |---------------|                                                           |
-| | ReadMe        | - Displays ReadMe File                                    |
-| | Help          | - Displays Help File                                      |
-| | Release Notes | - Displays Release Notes File                             |
-| |---------------|                                                           |
-| | Settings      | - Settings Dialog                                         |
-| | Disable       | - Disable AltTabAlternative until enable it again         |
-| | Run at statup | - Run at startup                                          |
-| |---------------|                                                           |
-| | Exit          | - Exit Application                                        |
-| +---------------+                                                           |
+| +======================+                                                    |
+| | About                | - Displays AboutDialog                             |
+| |----------------------|                                                    |
+| | ReadMe               | - Displays ReadMe File                             |
+| | Help                 | - Displays Help File                               |
+| | Release Notes        | - Displays Release Notes File                      |
+| |----------------------|                                                    |
+| | Settings             | - Settings Dialog                                  |
+| | Disable              | - Disable AltTabAlternative until enable it again  |
+| | Check for updates    | - Check for updates                                |
+| | Run at statup        | - Run at startup                                   |
+| |----------------------|                                                    |
+| | Exit                 | - Exit Application                                 |
+| +======================+                                                    |
+|                                                                             |
+|                                                                             |
+| Gui ContextMenu                                                             |
+| ---------------                                                             |
+|                                                                             |
+| +======================+                                                    |
+| | About                | - Displays AboutDialog                             |
+| |----------------------|                                                    |
+| | ReadMe               | - Displays ReadMe File                             |
+| | Help              F1 | - Displays Help File                               |
+| | Release Notes        | - Displays Release Notes File                      |
+| |----------------------|                                                    |
+| | Settings          F2 | - Settings Dialog                                  |
+| |----------------------|                                                    |
+| | Exit                 | - Exit Application                                 |
+| +======================+                                                    |
+|                                                                             |
+|                                                                             |
+| ListView ContextMenu                                                        |
+| --------------------                                                        |
+|                                                                             |
+| +==========================================+                                |
+| | Close Window                         Del |                                |
+| | Kill Process                   Shift+Del |                                |
+| |------------------------------------------|                                |
+| | Close All Windows          NumpadDiv (/) |                                |
+| | Kill All Processes   Shift+NumpadDiv (/) |                                |
+| |------------------------------------------|                                |
+| | Remaining are duplicates...              |                                |
+| +==========================================+                                |
 |                                                                             |
 |                                                                             |
 | Configuration INF File                                                      |
@@ -81,7 +118,32 @@ x-----------------------------------------------------------------------------x
 |                      |   then resize the window to WindowHeightMax according|
 |                      |   scroll bar presense.                               |
 |----------------------+------------------------------------------------------|
+| Check for updates    | How frequently check for updates.                    |
+|                      | Available Options:                                   |
+|                      |   Startup/Daily/Weekly/Never. Default: Weekly        |
+|                      |                                                      |
+|                      |   Startup : At startup only                          |
+|                      |     Daily : For every 24 hrs since the last run      |
+|                      |    Weekly : For every 7 days since the last run      |
+|                      |     Never : Never check for updates                  |
+|----------------------+------------------------------------------------------|
 | Reset                | Reset settings to default settings.                  |
+|----------------------+------------------------------------------------------|
+| Font/Background color| Not providing a way to change from UI. You can change|
+| for hidden windows   |   these settings in INI file manually.               |
+|----------------------+------------------------------------------------------|
+| Show/Hide StatusBar  | Not providing a way to show/hide StatusBar from UI.  |
+|                      | Please change ShowStatusBar setting in INI file to   |
+|                      |   1 - Show StatusBar                                 |
+|                      |   0 - Hide StatusBar                                 |
+|                      |                                                      |
+|                      | StatusBar has 3 parts, to display the following:     |
+|                      |   1. Every user action                               |
+|                      |   2. SelectedWindowPos/TotalCount                    |
+|                      |   3. Selected Window's ProcessID                     |
+|                      |                                                      |
+|                      | Note: Showing every user action in status bar is not |
+|                      |   completed yet. So, status bar is hidden initially. |
 |----------------------+------------------------------------------------------|
 | Import/Export        | Import/Export settings from/to an external INI file. |
 x-----------------------------------------------------------------------------x
@@ -89,6 +151,6 @@ x-----------------------------------------------------------------------------x
 |                                                                             |
 | Other Details:                                                              |
 | --------------                                                              |
-| - Coming soon...                                                            |
+| - None                                                                      |
 |                                                                             |
 o-----------------------------------------------------------------------------o

@@ -5,8 +5,23 @@ Known Limitations
 
 Known Issues
 ------------
-- None
+- Available @ https://sourceforge.net/p/alttabalternative/tickets/
 
+
+2016.3 new features and bug fixes
+---------------------------------
++ Hide/un-hide windows using keyboard shortcuts only.
+  Intentionally NOT providing a way to hide/un-hide windows from context menu.
+  You can change them manually in AltTabAlternativeSettings.ini file.
+  a. Hidden windows displayed with different color from the default list view
+     font/background color in list view.
++ Added StatusBar to display the following in parts:
+  1. Every user action (partially done)
+  2. SelectedWindowPos/TotalCount
+  3. Selected Window's ProcessID
+  NOTE | This funcationality is partially done. So, initially StatusBar is
+       | hidden, please change the ShowStatusBar setting to 1 in settings INI
+       | file to display StatusBar.
 
 2016.2 new features and bug fixes
 ---------------------------------
@@ -19,7 +34,10 @@ Known Issues
 + Handled Alt+Esc.
 + Settings go to AppData folder and can export settings to an external file.
 + Settings can be imported from an external file.
-+ Show at least one item in ListView even there are no windows
++ Show at least one item in ListView even there are no windows.
++ Check for updates menu item in tray menu.
++ How frequently check for updates in settings dialog.
++ Added Gui and ListView context menus.
 - Display proper window icon for most of the windows.
 - Fixed: Process is terminated on pressing Del key instead of default action on
   that window. Ex: Skype, Cicso Jabber.

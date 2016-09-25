@@ -26,6 +26,7 @@ SetWorkingDir, %A_ScriptDir%
 
 WM_KEYDOWN := 0x100
 WM_KEYUP   := 0x101
+WM_NOTIFY  := 0x004E
 
 ; -----------------------------------------------------------------------------
 ; Product Information 
@@ -36,7 +37,36 @@ AuthorName 		        := "Lokesh Govindu"
 AuthorPage 		        := "http://lokeshgovindu.blogspot.in/"
 ProductLatestURL        := "https://sourceforge.net/projects/alttabalternative/files/latest/download"
 UpdateFileURL           := "https://sourceforge.net/projects/alttabalternative/files/version.txt/download"
-AboutDialogText	         = AltTabAlternative is a small application created in <a href=`"https://autohotkey.com/`">AutoHotkey</a>, an alternative for windows native Alt+Tab switcher.
+AboutDialogHtml =
+(
+<html>
+<body>
+<b style='mso-bidi-font-weight:normal'><span
+style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;
+mso-fareast-font-family:"Times New Roman";color:red'>This program is a free
+software.</span></b><span style='font-family:"Calibri",sans-serif;mso-fareast-font-family:
+"Times New Roman"'><br>
+<span class=SpellE><span style='color:#002060'>AltTabAlternative</span></span><span
+style='color:#002060'> is a small application created in <a
+href="https://autohotkey.com/"><span class=SpellE><span style='color:#002060'>AutoHotkey</span></span></a>,
+is an alternative for windows native task switcher (<span class=SpellE>Alt+Tab</span>
+/ <span class=SpellE>Alt+Shift+Tab</span>).</span><br>
+<br>
+</span><span class=SpellE><b style='mso-bidi-font-weight:normal'><span
+style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;
+mso-fareast-font-family:"Times New Roman";color:#002060'>%ATAPRODUCTNAME%</span></b></span><b
+style='mso-bidi-font-weight:normal'><span style='font-size:11.0pt;mso-bidi-font-size:
+12.0pt;font-family:"Calibri",sans-serif;mso-fareast-font-family:"Times New Roman";
+color:#002060'><br>
+<span class=SpellE>FullVersion %ATAPRODUCTFULLVERSION%</span><br>
+%ATACOPYRIGHT%<o:p></o:p></span></b>
+<hr>
+<b style='mso-bidi-font-weight:normal'><span
+style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;
+mso-fareast-font-family:"Times New Roman";color:#C00000'>Thanks to God & everyone :-)</span></b>
+</body>
+</html>
+)
 
 SettingsDirPath         := A_AppData . "\" . ProductName
 SettingsINIFileName     := "AltTabAlternativeSettings.ini"
@@ -59,10 +89,13 @@ ReleaseNotesFileName    := "ReleaseNotes.txt"
 ; -----------------------------------------------------------------------------
 ; ::Global Variables
 ;
-; *** HiddenWindowsList ***
-; Do NOT worry about the deletion of windows from the HiddenWindowsList,
+; ********* HiddenWindowList *********
+; Do NOT worry about the deletion of windows from the HiddenWindowList,
 ;   GetWindowsCount function will take care of it. Window info will be deleted
 ;   if any hidden window doesn't exist.
+;
+; ********* Settings variables *********
+; All Settings are defined/read/write in Settings.Dialog.ahk file
 ; -----------------------------------------------------------------------------
 Global CurSearchString          := ""
 Global NewSearchString          := ""
@@ -76,9 +109,16 @@ Global SelectedWinNumber        := 0
 Global LVE_VkCodePrev            =
 Global HotkeysDisabled          := false
 Global ActivateWindow           := false
-Global HiddenWindowsList        := {}
+Global HiddenWindowList         := {}
 Global ShowHiddenWindows        := false
 
+Global SBPartsCount            := 3
+Global SBPartPIDPos            := 3
+Global SBPartActiveWindowPos   := 2
+Global SBPartInfoPos           := 1
+
+Global SBPartPIDWidth          := 108
+Global SBPartActiveWindowWidth := 60
 
 
 ; -----------------------------------------------------------------------------
@@ -104,6 +144,11 @@ GuiY = Center
 ; -----------------------------------------------------------------------------
 ; USER OVERRIDABLE SETTINGS:
 ; -----------------------------------------------------------------------------
+
+; Convert colours to correct format for listview color functions:
+; I have disabled the selection of item with the below colors in ListView.
+Listview_Colour_Selected_Text       := RGBtoBGR("0xFFFFFF")
+Listview_Colour_Selected_Back       := RGBtoBGR("0x0080FF")
 
 ; ListView Column Widths
 Col_1 = Auto    ; Icon Column
@@ -231,9 +276,62 @@ Menu, ListViewContextMenu, Add, E&xit, ExitHandler
 
 Return
 
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; Return Here
-; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/*
+ * ----------------------------------------------------------------------------
+ * Just to know returning script at here !!!
+ * ----------------------------------------------------------------------------
+ *
+ *                    _..-'(                       )`-.._
+ *                  ./'. '||\\.       (\_/)       .//||` .`\.
+ *               ./'.|'.'||||\\|..    )O O(    ..|//||||`.`|.`\.
+ *            ./'..|'.|| |||||\`````` '`"'` ''''''/||||| ||.`|..`\.
+ *          ./'.||'.|||| ||||||||||||.     .|||||||||||| |||||.`||.`\.
+ *         /'|||'.|||||| ||||||||||||{     }|||||||||||| ||||||.`|||`\
+ *        '.|||'.||||||| ||||||||||||{     }|||||||||||| |||||||.`|||.`
+ *       '.||| ||||||||| |/'   ``\||``     ''||/''   `\| ||||||||| |||.`
+ *       |/' \./'     `\./         \!|\   /|!/         \./'     `\./ `\|
+ *       V    V         V          }' `\ /' `{          V         V    V
+ *       `    `         `               V               '         '    '
+ *
+ *                                                                             ,aa,       ,aa
+ *                                                                            d"  "b    ,d",`b
+ *                                                                          ,dP a  "b,ad8' 8 8
+ *                                                                          d8' 8  ,88888a 8 8
+ *                                                                         d8baa8ba888888888a8
+ *                                                                      ,ad888888888YYYY888YYY,
+ *                                                                   ,a888888888888"   "8P"  "b
+ *                                                               ,aad8888tt,8888888b (0 `8, 0 8
+ *                           ____________________________,,aadd888ttt8888ttt"8"I  "Yb,   `Ya  8
+ *                     ,aad8888b888888aab8888888888b,     ,aatPt888ttt8888tt 8,`b,   "Ya,. `"aP
+ *                 ,ad88tttt8888888888888888888888888ttttt888ttd88888ttt8888tt,t "ba,.  `"`d888
+ *              ,d888tttttttttttttt888888888888888888888888ttt8888888888ttt888ttt,   "a,   `88'
+ *             a888tttttttttttttttttttttttttt8888888888888ttttt88888ttt888888888tt,    `""8"'
+ *            d8P"' ,tttttttttttttttttttttttttttttttttt88tttttt888tttttttt8a"8888ttt,   ,8'
+ *           d8tb  " ,tt"  ""tttttttttttttttttttttttttttttttttt88ttttttttttt, Y888tt"  ,8'
+ *           88tt)              "t" ttttt" """  """    "" tttttYttttttttttttt, " 8ttb,a8'
+ *           88tt                    `"b'                  ""t'ttttttttttt"t"t   t taP"
+ *           8tP                       `b                       ,tttttt' " " "tt, ,8"
+ *          (8tb  b,                    `b,                 a,  tttttt'        ""dP'
+ *          I88tb `8,                    `b                d'   tttttt        ,aP"
+ *          8888tb `8,                   ,P               d'    "tt "t'    ,a8P"
+ *         I888ttt, "b                  ,8'              ,8       "tt"  ,d"d"'
+ *        ,888tttt'  8b               ,dP""""""""""""""""Y8        tt ,d",d'
+ *      ,d888ttttP  d"8b            ,dP'                  "b,      "ttP' d'
+ *    ,d888ttttPY ,d' dPb,        ,dP'                      "b,     t8'  8
+ *   d888tttt8" ,d" ,d"  8      ,d"'                         `b     "P   8
+ *  d888tt88888d" ,d"  ,d"    ,d"                             8      I   8
+ * d888888888P' ,d"  ,d"    ,d"                               8      I   8
+ * 88888888P' ,d"   (P'    d"                                 8      8   8
+ * "8P"'"8   ,8'    Ib    d"                                  Y      8   8
+ *       8   d"     `8    8                                   `b     8   Y
+ *       8   8       8,   8,                                   8     Y   `b
+ *       8   Y,      `b   `b                                   Y     `b   `b
+ *       Y,   "ba,    `b   `b,                                 `b     8,   `"ba,
+ *        "b,   "8     `b    `""b                               `b     `Yaa,adP'
+ *          """""'      `baaaaaaP                                `YaaaadP"'
+ * 
+ * ----------------------------------------------------------------------------
+ */
 
 ; -----------------------------------------------------------------------------
 ; Display GuiContextMenu
@@ -330,6 +428,7 @@ CloseAllWindowsHandler:
         MsgBox, 292, AltTabAlternative: Close All Windows, Are you sure you want to close all windows?
         IfMsgBox, No
         {
+            Gosub, EnableIncrementalSearch
             return
         }                
     }
@@ -365,6 +464,7 @@ KillAllProcessesHandler:
         MsgBox, 292, AltTabAlternative: Kill All Processes, Are you sure you want to kill all processes?
         IfMsgBox, No
         {
+            Gosub, EnableIncrementalSearch
             return
         }                
     }
@@ -536,7 +636,7 @@ ToggleHotkeys(state)    ; (state = "On" or "Off")
     } else {
         Print("Unknown state")
         return
-    }   
+    }
 
     Hotkey, %AltHotkey%%TabHotkey%, AltTabAlternative, %state% UseErrorLevel
     Hotkey, %AltHotkey%%ShiftTabHotkey%, AltShiftTabAlternative, %state% UseErrorLevel
@@ -601,6 +701,7 @@ AltTabCommonFunction(direction)
     Global DisplayListShown
     Global Window_Found_Count
     Global LVE_VkCodePrev
+    Global SBPartPIDPos
     
     PrintSub("AltTabCommonFunction")
     PrintKV("direction", direction)
@@ -617,6 +718,8 @@ AltTabCommonFunction(direction)
         ToggleAltEscHotkey("On")
     }
 
+    SB_SetText("")
+    
     ; Check for Alt Up 
     SetTimer, CheckAltHotkeyUp, 40
     
@@ -635,10 +738,36 @@ AltTabCommonFunction(direction)
         SelectedRowNumber := Window_Found_Count
     }
     PrintKV("[AltTabCommonFunction] SelectedRowNumber", SelectedRowNumber)
-    LV_Modify(SelectedRowNumber, "Select Vis Focus") ; Get selected row and ensure selection & focus is visible
+    ;~ LV_Modify(SelectedRowNumber, "Select Vis Focus") ; Get selected row and ensure selection & focus is visible
+    ListViewSelectRow(SelectedRowNumber)
+
+    ; Display the selected row number and its WindowID
+    ;~ PrintSelectedRowInfo()
+
     Return
 }
 
+
+DisplayLVColors:
+    ; Assign Colors
+    PrintSub("DisplayLVColors")
+    GuiControl, -Redraw, ListView1
+    PrintDictKV("HiddenWindowList", HiddenWindowList)
+    Loop, % Window_Found_Count
+    {
+        WindowID := Window%A_Index%
+        
+        if (HiddenWindowList.HasKey(WindowID)) {
+            PrintKV("[DisplayLVColors] Applying Colors to WindowID", WindowID)
+            LV_ColorChange(index, ListViewHWFontColor, ListViewHWBackgroundColor)
+        }
+        ;~ else {
+            ;~ PrintKV("[DisplayLVColors] WindowID is NOT a hidden window", WindowID)
+        ;~ }
+    }
+    GuiControl, +Redraw, ListView1
+    ;~ WinSet, Redraw,, ahk_id %ListView1Hwnd%
+Return
 
 ; -----------------------------------------------------------------------------
 ; Check for Alt key release when the AltTab window is displayed
@@ -659,14 +788,19 @@ Return
 
 ; -----------------------------------------------------------------------------
 ; Hide Window
+; Description:
+;   1. Hides the selected window and add its WindowID to HiddenWindowList dict
+;   2. If ShowHiddenWindows is true then show that window with the hidden font
+;      color and background color on hide window (OnKeyPress: Shift+NumpadSub)
 ; -----------------------------------------------------------------------------
 ATAHideWindow:
     PrintLabel()
     GetSelectedRowInfo()
     windowID        := Window%SelectedRowNumber%        ; Store Window ID
 
-    if (HiddenWindowsList.HasKey(windowID)) {
-        Print("[ATAHideWindow] ERROR: This is a hidden window.")
+    if (HiddenWindowList.HasKey(windowID)) {
+        Print("[ATAHideWindow] ERROR: This is already hidden window.")
+        SB_SetText("This is already hidden window.")
         Return
     }
 
@@ -697,9 +831,21 @@ ATAHideWindow:
     WindowInfo.ProcID   := procID
     
     HideWindow(windowID)
-    HiddenWindowsList[windowID] := WindowInfo
-    PrintWindowsInfoList("[ATAHideWindow] HiddenWindowsList", HiddenWindowsList)
+    HiddenWindowList[windowID] := WindowInfo
+    PrintWindowsInfoList("[ATAHideWindow] HiddenWindowList", HiddenWindowList)
     PrintWindowInfo(WindowInfo)
+    
+    SBUpdateInfo(Format("Hide Window, WindowID: {1:#x}, PID: {2}", windowID, procID))
+    
+    ; -----------------------------------------------------------------------------
+    ; If ShowHiddenWindows is already true, then the window still visible in
+    ;  the ListView and this window can not be marked as displayed with colors
+    ;  in DisplayList subroutine. Handle it here.
+    ; -----------------------------------------------------------------------------
+    if (ShowHiddenWindows) {
+        LV_ColorChange(SelectedRowNumber, ListViewHWFontColor, ListViewHWBackgroundColor)
+    }
+    
     Gosub, EnableIncrementalSearch
 Return
 
@@ -711,14 +857,16 @@ ATAUnHideWindow:
     PrintLabel()
     GetSelectedRowInfo()
     windowID        := Window%SelectedRowNumber%
-    if (!HiddenWindowsList.HasKey(windowID)) {
+    PrintKV("[ATAUnHideWindow] windowID", windowID)
+    if (!HiddenWindowList.HasKey(windowID)) {
         Print("[ATAUnHideWindow] ERROR: This is NOT a hidden window.")
+        SB_SetText("This is NOT a hidden window.")
         Return
     }
 
     Gosub, DisableIncrementalSearch
 
-    WindowInfo      := HiddenWindowsList[windowID]
+    WindowInfo      := HiddenWindowList[windowID]
     ownerID         := WindowInfo.OwnerID
     windowTitle     := WindowInfo.Title
     procName        := WindowInfo.ProcName
@@ -734,13 +882,21 @@ ATAUnHideWindow:
     Print("[ATAUnHideWindow] ---------------------------------------------")
     
     ShowWindow(windowID)
-    HiddenWindowsList.Delete(windowID)
-    PrintWindowsInfoList("[ATAUnHideWindow] HiddenWindowsList", HiddenWindowsList)
+    HiddenWindowList.Delete(windowID)
+    PrintWindowsInfoList("[ATAUnHideWindow] HiddenWindowList", HiddenWindowList)
+    
+    SBUpdateInfo(Format("Un-hide Window, WindowID: {1:#x}, PID: {2}", windowID, procID))
+    
+    ; Reset the color of the unhidden window with the ListView font color
+    ;   and background color
+    LV_ColorChange(SelectedRowNumber)
+    
     Gosub, EnableIncrementalSearch
     
     ; By showing the window, hidden window becomes active window
     ; So, activate AltTabAlternative
     WinActivate, ahk_id %MainWindowHwnd%
+    LV_Modify(SelectedRowNumber, "Select Vis Focus") ; Get selected row and ensure selection & focus is visible
 Return
 
 
@@ -751,6 +907,13 @@ ATAToggleHiddenWindows:
     PrintLabel()
     ShowHiddenWindows := not ShowHiddenWindows
     PrintKV("ShowHiddenWindows", ShowHiddenWindows)
+    SBUpdateInfo("ShowHiddenWindows: " . (ShowHiddenWindows ? "ON" : "OFF"))
+    if (ShowHiddenWindows) {
+        LV_ColorInitiateStart()
+    }
+    else {
+        LV_ColorInitiateStop()
+    }
 Return
 
 
@@ -786,11 +949,11 @@ Return
 ; -----------------------------------------------------------------------------
 CreateWindow:
     PrintSub("CreateWindow")
-    Gui, 1: +AlwaysOnTop +ToolWindow -Caption +HwndMainWindowHwnd
+    Gui, 1: +AlwaysOnTop +ToolWindow -Caption +HwndMainWindowHwnd +Border
     Gui, 1: Margin, 0, 0
 
     Gui, 1: Font, s%SearchStringFontSize% c%SearchStringFontColor% %SearchStringFontStyle%, %SearchStringFontName%
-    Gui, 1: Add, Text, vTextCtrlVar hwndhTextCtrl Center w%WindowWidth% +Border, Search String: empty
+    Gui, 1: Add, Text, vTextCtrlVar hwndhTextCtrl Center w%WindowWidth%, Search String: empty
 
     Gui, 1: Font, s%ListViewFontSize% c%ListViewFontColor% %ListViewFontStyle%, %ListViewFontName%
     Gui, 1: Add, ListView, w%WindowWidth% h200 AltSubmit +Redraw -Multi NoSort +LV0x2 Background%ListViewBackgroundColor% Count10 gListViewEvent vListView1 HwndListView1Hwnd, %ColumnTitleList%
@@ -798,6 +961,19 @@ CreateWindow:
     Print("ListView1Hwnd = [" . ListView1Hwnd . "]")
     
     Gui, 1: Font, s%FontSize% c%FontColorEdit% %FontStyle%, %FontType%
+    Gui, 1: Font
+    Gui, 1: Font, S11, Lucida Console
+
+    if (ShowStatusBar) {
+        Gui, 1: Add, StatusBar, vMyStatusBar +HwndhMyStatusBar, 
+    }
+    else {
+        Gui, 1: Add, StatusBar, vMyStatusBar +HwndhMyStatusBar Hidden, 
+    }
+
+    
+    SBPartInfoWidth := WindowWidth - SBPartActiveWindowWidth - SBPartPIDWidth
+    SB_SetParts(SBPartInfoWidth, SBPartActiveWindowWidth, SBPartPIDWidth)
 
     Gui, 1: +LastFound
     WinSet, Transparent, %WindowTransparency%
@@ -811,6 +987,7 @@ ShowWindow:
     PrintSub("ShowWindow")
     Gui_vx := GuiCenterX()
     Gui, 1: Show, AutoSize x%Gui_vx% y%GuiY%, AltTabAlternative
+    LV_Modify(SelectedRowNumber, "Select Vis Focus") ; Get selected row and ensure selection & focus is visible
     DisplayListShown = 1
 Return
 
@@ -844,7 +1021,7 @@ Return
 DisplayList:
     PrintSub("DisplayList")
     PrintKV("[DisplayList] SelectedRowNumber", SelectedRowNumber)
-    
+    LV_ColorChange() ; Clear all highlighting
     GuiControl, -Redraw, ListView1
     LV_Delete()
     windowList =
@@ -916,20 +1093,20 @@ DisplayList:
 
     if (ShowHiddenWindows) {
         DetectHiddenWindows, On
-        HiddenWindowsListLen := GetDictLength(HiddenWindowsList)
-        PrintKV("[DisplayList] HiddenWindowsListLen", HiddenWindowsListLen)
-        for WindowID, WindowInfo in HiddenWindowsList {
+        HiddenWindowListLen := GetDictLength(HiddenWindowList)
+        PrintKV("[DisplayList] HiddenWindowListLen", HiddenWindowListLen)
+        for WindowID, WindowInfo in HiddenWindowList {
             if (IsHiddenWindowExist(WindowInfo.WindowID)) {
-                PrintKV("[DisplayList] WindowID", DecimalToHex(WindowID))
-                PrintKV("[DisplayList] OwnerID", val.OwnerID)
-                PrintWindowInfo(HiddenWindowsList[WindowID])
+                ;~ PrintKV("[DisplayList] WindowID", DecimalToHex(WindowID))
+                ;~ PrintKV("[DisplayList] OwnerID", WindowInfo.OwnerID)
+                PrintWindowInfo(HiddenWindowList[WindowID])
                 Window_Found_Count += 1
-                GetWindowIcon(val.OwnerID, UseLargeIconsCurrent)          ; (window id, whether to get large icons)
-                WindowStoreAttributes(Window_Found_Count, val.WindowID, val.OwnerID)  ; Index, wid, parent (or blank if none)
-                LV_Add("Icon" . Window_Found_Count, "", Window_Found_Count, val.Title, val.ProcName)
+                GetWindowIcon(WindowInfo.OwnerID, UseLargeIconsCurrent)          ; (window id, whether to get large icons)
+                WindowStoreAttributes(Window_Found_Count, WindowInfo.WindowID, WindowInfo.OwnerID)  ; Index, wid, parent (or blank if none)
+                LV_Add("Icon" . Window_Found_Count, "", Window_Found_Count, WindowInfo.Title, WindowInfo.ProcName)
             }
             else {
-                HiddenWindowsList.Delete(WindowID)
+                HiddenWindowList.Delete(WindowID)
             }
         }
         DetectHiddenWindows, Off
@@ -938,9 +1115,18 @@ DisplayList:
     PrintKV("[DisplayList] Window_Found_Count", Window_Found_Count)
 
     GuiControl, +Redraw, ListView1
+    
     ;~ PrintKV("[DisplayList] SelectedRowNumber", SelectedRowNumber)
-    LV_Modify(SelectedRowNumber, "Select Vis Focus") ; Get selected row and ensure selection & focus is visible
-    ;~ LV_Modify(1, "Select Vis Focus") ; Get selected row and ensure selection & focus is visible
+    ;~ LV_Modify(SelectedRowNumber, "Select Vis Focus") ; Get selected row and ensure selection & focus is visible
+
+    ; If there is a hidden window at end and it is the currently selected row
+    ;  and ShowHiddenWindows is ON.
+    ; When user turned ShowHiddenWindows OFF then change the selection to the
+    ;  last row.
+    if (SelectedRowNumber > Window_Found_Count) {
+        SelectedRowNumber := Window_Found_Count
+    }
+    ListViewSelectRow(SelectedRowNumber)
 
     ; TURN ON INCREMENTAL SEARCH
     SetTimer, tIncrementalSearch, 500
@@ -956,6 +1142,7 @@ ListViewEvent:
     ;~ Print("ListViewEvent: A_GuiEvent = " . A_GuiEvent)
     ;~ Print("ListViewEvent: A_EventInfo = " . A_EventInfo)
     ;~ key := GetKeyName(Format("vk{:x}", A_EventInfo))
+    ;~ SBUpdateInfo("KeyPress: " . key)
     ;~ PrintKV2("ListViewEvent: A_EventInfo", A_EventInfo, "key", key)
     
     if A_GuiEvent = DoubleClick     ; DoubleClick
@@ -1003,7 +1190,6 @@ ListViewEvent:
     {
         key := GetKeyName(Format("vk{:x}", A_EventInfo))
         PrintKV2("[K] A_EventInfo", A_EventInfo, "key", key)
-        
         PrintKV("[K] LVE_VkCodePrev", LVE_VkCodePrev)
         
         ; Check if Shift key is down
@@ -1043,6 +1229,7 @@ ListViewEvent:
         ; -----------------------------------------------------------------------------
         else if (vkCode = GetKeyVK("NumpadDown")) {
             Gosub, AltTabAlternative
+            SBUpdateInfo("KeyPress: " . key)
             LVE_VkCodePrev := vkCode
             Return
         }
@@ -1051,6 +1238,7 @@ ListViewEvent:
         ; -----------------------------------------------------------------------------
         else if (vkCode = GetKeyVK("NumpadUp")) {
             Gosub, AltShiftTabAlternative
+            SBUpdateInfo("KeyPress: " . key)
             LVE_VkCodePrev := vkCode
             Return
         }
@@ -1059,7 +1247,9 @@ ListViewEvent:
         ; -----------------------------------------------------------------------------
         else if (vkCode = GetKeyVK("NumpadHome") or vkCode = GetKeyVK("NumpadPgUp")) {
             SelectedRowNumber = 1
-            LV_Modify(SelectedRowNumber, "Select Vis Focus")
+            ;~ LV_Modify(SelectedRowNumber, "Select Vis Focus")
+            ListViewSelectRow(SelectedRowNumber)
+            SBUpdateInfo("KeyPress: " . key)
             LVE_VkCodePrev := vkCode
             Return
         }
@@ -1068,7 +1258,9 @@ ListViewEvent:
         ; -----------------------------------------------------------------------------
         else if (vkCode = GetKeyVK("NumpadEnd") or vkCode = GetKeyVK("NumpadPgDn")) {
             SelectedRowNumber := Window_Found_Count
-            LV_Modify(SelectedRowNumber, "Select Vis Focus")
+            ;~ LV_Modify(SelectedRowNumber, "Select Vis Focus")
+            ListViewSelectRow(SelectedRowNumber)
+            SBUpdateInfo("KeyPress: " . key)
             LVE_VkCodePrev := vkCode
             Return
         }
@@ -1159,6 +1351,7 @@ ListViewEvent:
                 
                 IfMsgBox, No
                 {
+                    Gosub, EnableIncrementalSearch
                     return
                 }                
             }
@@ -1208,11 +1401,13 @@ ListViewEvent:
             }
             
             ;~ Print("Key is alnum")
+            SBUpdateInfo("KeyPress: " . key)
             NewSearchString := NewSearchString . key
             SelectedRowNumber := 1
         }        
         else if (vkCode = 8) { ; Backspace
             ;~ Print("Key is Backspace")
+            SBUpdateInfo("KeyPress: Backspace")
             NewSearchString := SubStr(NewSearchString, 1, StrLen(NewSearchString) - 1)
             SelectedRowNumber := 1
         }
@@ -1224,6 +1419,15 @@ ListViewEvent:
         LVE_VkCodePrev := vkCode
     }
 Return
+
+
+ListViewSelectRow(RowNumber)
+{
+    LV_Modify(RowNumber, "Select Vis Focus")
+    ;~ SBUpdateInfo()
+    SBUpdatePID()
+    SBUpdateActiveWindowPos()
+}
 
 IsAlpha(x) {
    If x is Alpha
@@ -1314,6 +1518,7 @@ WindowStoreAttributes(index, windowID, ownerID)
 {
     Local State_temp
     ;~ PrintSub("WindowStoreAttributes")
+    ;~ PrintKV3("[WindowStoreAttributes] index", index, "windowID", windowID, "ownerID", ownerID)
     WinGetTitle, windowTitle, ahk_id %ownerID%
     WinGet, procPath, ProcessPath, ahk_id %windowID%
     WinGet, procName, ProcessName, ahk_id %windowID%
@@ -1327,6 +1532,13 @@ WindowStoreAttributes(index, windowID, ownerID)
     Exe_Path%index%      := procPath        ; Store the process path
     PID%index%           := procID          ; Store the process id
     Dialog%index%        := Dialog          ; S if found a Dialog window, else 0
+
+    if (ShowHiddenWindows) {
+        if (HiddenWindowList.HasKey(windowID)) {
+            PrintKV("[WindowStoreAttributes] Applying HideWindow Colors to WindowID", WindowID)
+            LV_ColorChange(index, ListViewHWFontColor, ListViewHWBackgroundColor)
+        }
+    }
 
     ;~ Print("[WindowStoreAttributes] -------------------------------------------")
     ;~ Print("[WindowStoreAttributes]       Index = " . index)
@@ -1348,10 +1560,22 @@ GetSelectedRowInfo()
     PrintSub("GetSelectedRowInfo")
     
     SelectedRowNumber := LV_GetNext(0, "F")
+    Local WindowID := Window%SelectedRowNumber%
     PrintKV("[GetSelectedRowInfo] SelectedRowNumber", SelectedRowNumber)
+    PrintKV("[GetSelectedRowInfo]          WindowID", WindowID)
 
     ; Get the row's 2nd column's text for real order number (hidden column).
     LV_GetText(RowText, SelectedWinNumber, 2)
+}
+
+
+PrintSelectedRowInfo()
+{
+    PrintSub("PrintSelectedRowInfo")    
+    SelectedRowNumber := LV_GetNext(0, "F")
+    WindowID := Window%SelectedRowNumber%
+    PrintKV("[PrintSelectedRowInfo] SelectedRowNumber", SelectedRowNumber)
+    PrintKV("[PrintSelectedRowInfo]          WindowID", WindowID)
 }
 
 
@@ -1746,7 +1970,7 @@ LV_SetSI(hList, iItem, iSubItem, iImage) {
 
 ; -----------------------------------------------------------------------------
 ; Returns the number of windows
-; Do NOT worry about the deletion of windows from the HiddenWindowsList, this
+; Do NOT worry about the deletion of windows from the HiddenWindowList, this
 ;   function will take care of it.
 ; -----------------------------------------------------------------------------
 GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
@@ -1822,15 +2046,15 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
     } ; Loop ends here!
     
     if (ShowHiddenWindows) {
-        ;~ HiddenWindowsListLen := GetDictLength(HiddenWindowsList)
-        ;~ PrintKV("[GetWindowsCount] HiddenWindowsListLen", HiddenWindowsListLen)        
+        ;~ HiddenWindowListLen := GetDictLength(HiddenWindowList)
+        ;~ PrintKV("[GetWindowsCount] HiddenWindowListLen", HiddenWindowListLen)        
         DetectHiddenWindows, On
-        for WindowID, WindowInfo in HiddenWindowsList {
+        for WindowID, WindowInfo in HiddenWindowList {
             if (IsHiddenWindowExist(WindowInfo.WindowID)) {
                 windowFoundCount += 1
             }
             else {
-                HiddenWindowsList.Delete(WindowID)
+                HiddenWindowList.Delete(WindowID)
             }
         }
         DetectHiddenWindows, Off
@@ -1855,7 +2079,13 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
 ; -----------------------------------------------------------------------------
 TerminateWindow(windowID) {
     ;~ WinClose, ahk_id %windowID%
+    if (HiddenWindowList.HasKey(windowID)) {
+        Print("[TerminateWindow] INFO: You can NOT close hidden window.")
+        SB_SetText("You can NOT close hidden window")
+        Return
+    }
     PostMessage, 0x112, 0xF060, , , ahk_id %windowID%  ; 0x112 = WM_SYSCOMMAND, 0xF060 = SC_CLOSE
+    SB_SetText("Sent SC_CLOSE message on window")
     ;~ Sleep, 50
 }
 
@@ -1929,7 +2159,7 @@ HiddenWindowsFileOpenFun()
 {
     Global HiddenWindowsFilePath
     Global HiddenWindowsFile_ID
-    Global HiddenWindowsList := {}
+    Global HiddenWindowList := {}
     PrintSub("HiddenWindowsFileOpenFun")
     
     CSV_Load(HiddenWindowsFilePath, HiddenWindowsFile_ID)
@@ -1946,8 +2176,8 @@ HiddenWindowsFileOpenFun()
         WindowInfo.ProcID   := CSV_ReadCell(HiddenWindowsFile_ID, row, 5)
         if (IsHiddenWindowExist(WindowInfo.WindowID)) {
             PrintWindowInfo(windowInfo)
-            HiddenWindowsList[WindowInfo.WindowID] := WindowInfo
-            PrintWindowsInfoList("[HiddenWindowsFileOpenFun] HiddenWindowsList", HiddenWindowsList)        
+            HiddenWindowList[WindowInfo.WindowID] := WindowInfo
+            PrintWindowsInfoList("[HiddenWindowsFileOpenFun] HiddenWindowList", HiddenWindowList)        
         }
         else {
             Print("[HiddenWindowsFileOpenFun] Window does NOT exist. WindowID = " . WindowInfo.WindowID)
@@ -1957,13 +2187,16 @@ HiddenWindowsFileOpenFun()
 
 ; -----------------------------------------------------------------------------
 ; Close/Save HiddenWindowFile
+; Write the hidden window information in the following format (CSV):
+;  WindowID,OwnerID,Title,ProcessName,ProcessID
+;  Ex: 787432,0xc03e8,Untitled - Notepad,notepad.exe,1092
 ; -----------------------------------------------------------------------------
 HiddenWindowsFileSave:
 HiddenWindowsFileClose:
     PrintLabel()
     FileDelete, %HiddenWindowsFilePath%
     CSV_Create(HiddenWindowsFilePath, HiddenWindowsFile_Cols, HiddenWindowsFile_ID)
-    for windowID, windowInfo in HiddenWindowsList {
+    for windowID, windowInfo in HiddenWindowList {
         RowData := CreateHiddenWindowRowData(windowInfo)
         PrintKV("RowData", RowData)
         CSV_AddRow(HiddenWindowsFile_ID, RowData)
@@ -1975,14 +2208,14 @@ HiddenWindowsFileSaveFun()
 {
     Global HiddenWindowsFilePath
     Global HiddenWindowsFile_ID
-    Global HiddenWindowsList := {}
+    Global HiddenWindowList := {}
     PrintSub("HiddenWindowsFileSaveFun")
 
     ; Delete existing file and re-write the contents
     FileDelete, %HiddenWindowsFilePath%
     
     CSV_Create(HiddenWindowsFilePath, HiddenWindowsFile_Cols, HiddenWindowsFile_ID)
-    for windowID, windowInfo in HiddenWindowsList {
+    for windowID, windowInfo in HiddenWindowList {
         ; Skip the windows those do NOT exist
         if (IsHiddenWindowExist(WindowInfo.WindowID)) {        
             RowData := CreateHiddenWindowRowData(windowInfo)
@@ -2023,6 +2256,199 @@ IsWindowExist(WindowID)
         exists := false
     }
     return exists
+}
+
+
+; -----------------------------------------------------------------------------
+; ListView initiate color
+; WM_NOTIFY msg sent by a common control to its parent window when an event
+;  has occurred or the control requires some information. Invoke this method
+;  to start displaying the hidden windows with specified colors.
+; -----------------------------------------------------------------------------
+LV_ColorInitiateStart() ; initiate listview color change procedure
+{
+    Global
+    PrintSub("LV_ColorInitiateStart")
+    ; MUST include HWNDListView1Hwnd when creating listview (Gui, Add, ListView, ... HWNDListView1Hwnd)
+    VarSetCapacity(LvItem, 36, 0)
+    OnMessage(WM_NOTIFY, "OnNotify")
+}
+
+
+; -----------------------------------------------------------------------------
+; ListView stop OnNotify message hook
+; Reset WM_NOTIFY message to an empty function when not displaying the hidden
+;  windows. This will improve the performance of rendering ListView.
+; -----------------------------------------------------------------------------
+LV_ColorInitiateStop() ; initiate listview color change procedure
+{
+    Global
+    PrintSub("LV_ColorInitiateStop")
+    OnMessage(WM_NOTIFY, "")
+}
+
+
+; -----------------------------------------------------------------------------
+; Cache the given TextColor and BackColor to display the specified window
+; Invoke TextColor, BackColor with empty strings to clear the highlighting, so
+;  this function used default font/background color to clear.
+; -----------------------------------------------------------------------------
+LV_ColorChange(Index="", TextColor="", BackColor="") ; change specific line's color or reset all lines
+{
+    Global
+    ; Use the ListView font color and background color to clear the highlighting
+    if (TextColor = "") {
+        TextColor := ListViewFontColorDefault
+    }
+    if (BackColor = "") {
+        BackColor := ListViewBackgroundColorDefault
+    }
+    
+    PrintSub("LV_ColorChange: Index = " . Index . ", TextColor = " . TextColor . ", BackColor = " . BackColor)
+    If Index =
+    {
+        Print("Clearing all highlights")
+        Loop, %Window_Found_Count% ; or use another count if listview not visible
+            LV_ColorChange(A_Index)
+    }
+    Else
+    {
+        Line_Color_%Index%_Text := TextColor
+        Line_Color_%Index%_Back := BackColor
+        ;~ WinSet, Redraw,, ahk_id %ListView1Hwnd%
+    }
+}
+
+
+; -----------------------------------------------------------------------------
+; ON_NOTIFY( wNotifyCode, id, memberFxn )
+;
+; wNotifyCode : The code for the notification message to be handled, such as LVN_KEYDOWN.
+;          id : The child identifier of the control for which the notification is sent.
+;   memberFxn : The member function to be called when this notification is sent.
+;
+; Your member function must be declared with the following prototype:
+;   afx_msg void memberFxn( NMHDR * pNotifyStruct, LRESULT * result );
+; -----------------------------------------------------------------------------
+OnNotify(W, L, M)
+{
+    Local DrawStage, Current_Line, Index, IsSelected := 0
+    Static NM_CUSTOMDRAW          := -12
+    Static LVN_COLUMNCLICK        := -108
+    
+    ; Size off NMHDR structure
+    Static CDDS_PREPAINT          := 0x00000001
+    Static CDDS_ITEMPREPAINT      := 0x00010001
+    Static CDDS_SUBITEMPREPAINT   := 0x00030001
+    Static CDRF_DODEFAULT         := 0x00000000
+    Static CDRF_NEWFONT           := 0x00000002
+    Static CDRF_NOTIFYITEMDRAW    := 0x00000020
+    Static CDRF_NOTIFYSUBITEMDRAW := 0x00000020
+    Static CLRDEFAULT             := 0xFF000000
+    
+    ; Size off NMHDR structure
+    Static NMHDRSize := (2 * A_PtrSize) + 4 + (A_PtrSize - 4)
+    ; Offset of dwItemSpec (NMCUSTOMDRAW)
+    Static ItemSpecP := NMHDRSize + (5 * 4) + A_PtrSize + (A_PtrSize - 4)
+    ; Size of NMCUSTOMDRAW structure
+    Static NCDSize  := NMHDRSize + (6 * 4) + (3 * A_PtrSize) + (2 * (A_PtrSize - 4))
+    ; Offset of clrText (NMLVCUSTOMDRAW)
+    Static ClrTxP   :=  NCDSize
+    ; Offset of clrTextBk (NMLVCUSTOMDRAW)
+    Static ClrTxBkP := ClrTxP + 4
+    ; Offset of iSubItem (NMLVCUSTOMDRAW)
+    Static SubItemP := ClrTxBkP + 4
+    ; Offset of clrFace (NMLVCUSTOMDRAW)
+    Static ClrBkP   := SubItemP + 8
+
+    ;~ PrintSub("OnNotify")
+    
+    Critical, 100
+    If (NumGet(L + 0, 0, "UPtr") = ListView1Hwnd) {
+        ;~ PrintSub("OnNotify: ListView1Hwnd")
+        M := NumGet(L + (A_PtrSize * 2), 0, "Int")
+        If (M = NM_CUSTOMDRAW) {
+            DrawStage := NumGet(L + NMHDRSize, 0, "UInt")
+            Current_Line := NumGet(L + ItemSpecP, 0, "UPtr") + 1
+            if (DrawStage = CDDS_PREPAINT) {
+                return CDRF_NOTIFYITEMDRAW
+            }
+            else if (DrawStage = CDDS_ITEMPREPAINT) {
+                If (DllCall("GetFocus") = ListView1Hwnd) {                                      ; Control has Keyboard Focus?
+                    SendMessage, 4140, Current_Line - 1, 2, , ahk_id %ListView1Hwnd%            ; LVM_GETITEMSTATE
+                    IsSelected := ErrorLevel
+                    If (IsSelected = 2) {                                                       ; LVIS_SELECTED
+                        ; Custom selected color highlighting
+                        ;~ NumPut(Listview_Colour_Selected_Text, L + ClrTxP, 0, "UInt")
+                        ;~ NumPut(Listview_Colour_Selected_Back, L + ClrTxBkP, 0, "UInt")
+                        ;~ NumPut(Listview_Colour_Selected_Back, L + ClrBkP, 0, "UInt")
+                        ;~ EncodeInteger(0x0, 4, &LvItem, 12)                                       ; LVITEM->state
+                        ;~ EncodeInteger(0x2, 4, &LvItem, 16)                                       ; LVITEM->stateMask         ; LVIS_SELECTED
+                        ;~ SendMessage, 4139, Current_Line - 1, &LvItem, , ahk_id %ListView1Hwnd%   ; Disable Highlighting
+
+                        ; We want item post-paint notifications
+                        Return, 0x00000010                                                       ; CDRF_NOTIFYPOSTPAINT
+                    }
+                    
+                    ; Change the 3rd parameter in the line below if the line number isn't in the 2nd column!
+                    ;~ PrintKV2("[OnNotify] Index", Index, "Current_Line", Current_Line)
+                    LV_GetText(Index, Current_Line, 2)
+                    If (Line_Color_%Index%_Text != "") {
+                        NumPut(Line_Color_%Index%_Text, L + ClrTxP, 0, "UInt")
+                        NumPut(Line_Color_%Index%_Back, L + ClrTxBkP, 0, "UInt")
+                    }
+                }
+            }
+            else if (DrawStage = 0x10000|2) {                                                   ; CDDS_ITEMPOSTPAINT
+                If (IsSelected) {
+                  EncodeInteger(0x02, 4, &LvItem, 12)                                           ; LVITEM->state
+                  EncodeInteger(0x02, 4, &LvItem, 16)                                           ; LVITEM->stateMask         ; LVIS_SELECTED
+                  SendMessage, 4139, Current_Line - 1, &LvItem, , ahk_id %ListView1Hwnd%        ; LVM_SETITEMSTATE
+                }
+            }
+        }
+    }
+}
+
+
+EncodeInteger(p_value, p_size, p_address, p_offset) {
+    loop, %p_size%
+        DllCall("RtlFillMemory", "uint", p_address + p_offset + A_Index - 1, "uint", 1, "uchar", p_value >> (8 * (A_Index - 1)))
+}
+
+
+; -----------------------------------------------------------------------------
+; ::StatusBar related stuff
+; -----------------------------------------------------------------------------
+
+
+; -----------------------------------------------------------------------------
+; 
+; -----------------------------------------------------------------------------
+SBUpdateInfo(info="") {
+    SB_SetText(info)
+}
+
+; -----------------------------------------------------------------------------
+; Update selected window process ID
+; Always display the information center of the part using "`t" (tab character)
+; -----------------------------------------------------------------------------
+SBUpdatePID() {
+    Global SelectedRowNumber
+    procID := PID%SelectedRowNumber%
+    fmtString := Format("`tPID: {1:5}", procID)
+    SB_SetText(fmtString, SBPartPIDPos)
+}
+
+
+; -----------------------------------------------------------------------------
+; Update selected window position
+; Always display the information center of the part using "`t" (tab character)
+; -----------------------------------------------------------------------------
+SBUpdateActiveWindowPos() {
+    Global SelectedRowNumber
+    fmtString := Format("`t{1:2}/{2:-2}", SelectedRowNumber, Window_Found_Count)
+    SB_SetText(fmtString, SBPartActiveWindowPos)
 }
 
 

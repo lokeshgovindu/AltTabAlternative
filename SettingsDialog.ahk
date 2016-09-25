@@ -588,11 +588,18 @@ CreateDefaultINIFile(SettingsINIFilePath) {
     (
 ; -----------------------------------------------------------------------------
 ; Configuration/settings file for AltTabAlternative.
-; Note: Do NOT edit manually if you are not familiar with settings.
-; Color Format is RGB(0xAA, 0xBB, 0xCC) => 0xAABBCC, in hex format.
-;   0xAA : Red component
-;   0xBB : Green component
-;   0xCC : Blue component
+; Notes:
+;   1. Do NOT edit manually if you are not familiar with settings.
+;   2. Intentionally NOT providing a way in GUI to change the font/background
+;      color of a hidden window. If you want to change you can try to change
+;      the ListView's HWFontColor, HWBackgroundColor properties.
+;   3. Color Format is RGB(0xAA, 0xBB, 0xCC) => 0xAABBCC, in hex format.
+;      0xAA : Red component
+;      0xBB : Green component
+;      0xCC : Blue component
+;   4. Presently NOT displaying every action in status bar, this is in progress.
+;      So, not providing a checkbox control for ShowStatusBar setting.
+;      Please change the ShowStatusBar to 1 manually to display StatusBar.
 ; -----------------------------------------------------------------------------
 [SearchString]
 FontName=%SearchStringFontNameDefault%
@@ -605,7 +612,10 @@ FontSize=%ListViewFontSizeDefault%
 FontColor=%ListViewFontColorDefault%
 FontStyle=%ListViewFontStyleDefault%
 BackgroundColor=%ListViewBackgroundColorDefault%
+HWFontColor=%ListViewHWFontColorDefault%
+HWBackgroundColor=%ListViewHWBackgroundColorDefault%
 [General]
+ShowStatusBar=%ShowStatusBarDefault%
 PromptTerminateAll=%PromptTerminateAllDefault%
 WindowTransparency=%WindowTransparencyDefault%
 WindowWidthPercentage=%WindowWidthPercentageDefault%
@@ -661,14 +671,24 @@ IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
         ReadVariable("ListViewFontColor",       	SettingsINIFilePathIn, "ListView",     "FontColor",                 ListViewFontColorDefault)
         ReadVariable("ListViewFontStyle",       	SettingsINIFilePathIn, "ListView",     "FontStyle",                 ListViewFontStyleDefault)
         ReadVariable("ListViewBackgroundColor", 	SettingsINIFilePathIn, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
+        ReadVariable("ListViewHWFontColor",       	SettingsINIFilePathIn, "ListView",     "HWFontColor",               ListViewHWFontColorDefault)
+        ReadVariable("ListViewHWBackgroundColor", 	SettingsINIFilePathIn, "ListView",     "HWBackgroundColor",         ListViewHWBackgroundColorDefault)
+        ReadVariable("ShowStatusBar",      	        SettingsINIFilePathIn, "General",      "ShowStatusBar",             ShowStatusBarDefault)
         ReadVariable("PromptTerminateAll",      	SettingsINIFilePathIn, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
         ReadVariable("WindowTransparency",      	SettingsINIFilePathIn, "General",      "WindowTransparency",        WindowTransparencyDefault)
         ReadVariable("WindowWidthPercentage",   	SettingsINIFilePathIn, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
         ReadVariable("WindowHeightMaxPercentage",   SettingsINIFilePathIn, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
         ReadVariable("CheckForUpdates",             SettingsINIFilePathIn, "General",      "CheckForUpdates",           CheckForUpdatesDefault)
+        
+        ; Convert these RGB format colors to BGR format colors before using them
+        ListViewHWFontColor       := RGBtoBGR(ListViewHWFontColor)
+        ListViewHWBackgroundColor := RGBtoBGR(ListViewHWBackgroundColor)
     }
     else
     {
+        ; Convert these BGR format colors to RGB format colors before writing to INI
+        ListViewHWFontColor       := RGBtoBGR(ListViewHWFontColor)
+        ListViewHWBackgroundColor := RGBtoBGR(ListViewHWBackgroundColor)
         WriteVariable(SearchStringFontName,         SettingsINIFilePathIn, "SearchString", "FontName",                  SearchStringFontNameDefault)
         WriteVariable(SearchStringFontSize,         SettingsINIFilePathIn, "SearchString", "FontSize",                  SearchStringFontSizeDefault)
         WriteVariable(SearchStringFontColor,        SettingsINIFilePathIn, "SearchString", "FontColor",                 SearchStringFontColorDefault)
@@ -678,6 +698,9 @@ IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
         WriteVariable(ListViewFontColor,            SettingsINIFilePathIn, "ListView",     "FontColor",                 ListViewFontColorDefault)
         WriteVariable(ListViewFontStyle,            SettingsINIFilePathIn, "ListView",     "FontStyle",                 ListViewFontStyleDefault)
         WriteVariable(ListViewBackgroundColor,      SettingsINIFilePathIn, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
+        WriteVariable(ListViewHWFontColor,          SettingsINIFilePathIn, "ListView",     "HWFontColor",               ListViewHWFontColorDefault)
+        WriteVariable(ListViewHWBackgroundColor,    SettingsINIFilePathIn, "ListView",     "HWBackgroundColor",         ListViewHWBackgroundColorDefault)
+        WriteVariable(ShowStatusBar,                SettingsINIFilePathIn, "General",      "ShowStatusBar",             ShowStatusBarDefault)
         WriteVariable(PromptTerminateAll,           SettingsINIFilePathIn, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
         WriteVariable(WindowTransparency,           SettingsINIFilePathIn, "General",      "WindowTransparency",        WindowTransparencyDefault)
         WriteVariable(WindowWidthPercentage,        SettingsINIFilePathIn, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
@@ -842,6 +865,9 @@ PrintSettings() {
     PrintKV("ListViewFontColor", ListViewFontColor)
     PrintKV("ListViewFontStyle", ListViewFontStyle)
     PrintKV("ListViewBackgroundColor", ListViewBackgroundColor)
+    PrintKV("ListViewHWFontColor", ListViewHWFontColor)
+    PrintKV("ListViewHWBackgroundColor", ListViewHWBackgroundColor)
+    PrintKV("ShowStatusBar", ShowStatusBar)
     PrintKV("PromptTerminateAll", PromptTerminateAll)
     PrintKV("WindowTransparency", WindowTransparency)
     PrintKV("WindowWidthPercentage", WindowWidthPercentage)
@@ -864,6 +890,9 @@ PrintDefaultSettings() {
     PrintKV("ListViewFontColorDefault", ListViewFontColorDefault)
     PrintKV("ListViewFontStyleDefault", ListViewFontStyleDefault)
     PrintKV("ListViewBackgroundColorDefault", ListViewBackgroundColorDefault)
+    PrintKV("ListViewHWFontColorDefault", ListViewHWFontColorDefault)
+    PrintKV("ListViewHWBackgroundColorDefault", ListViewHWBackgroundColorDefault)
+    PrintKV("ShowStatusBarDefault", ShowStatusBarDefault)
     PrintKV("PromptTerminateAllDefault", PromptTerminateAllDefault)
     PrintKV("WindowTransparencyDefault", WindowTransparencyDefault)
     PrintKV("WindowWidthPercentageDefault", WindowWidthPercentageDefault)
@@ -948,6 +977,9 @@ DefineDefaultSettings() {
     ListViewFontColorDefault            := 0xFFFFFF
     ListViewFontStyleDefault            := "norm"
     ListViewBackgroundColorDefault      := 0x000000
+    ListViewHWFontColorDefault          := 0x000000
+    ListViewHWBackgroundColorDefault    := 0xFFC90E
+    ShowStatusBarDefault                := 0
     PromptTerminateAllDefault           := 1
     WindowTransparencyDefault           := 222
     WindowWidthPercentageDefault        := 45
