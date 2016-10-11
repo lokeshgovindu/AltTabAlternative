@@ -52,7 +52,8 @@ href="https://autohotkey.com/"><span class=SpellE><span style='color:#002060'>Au
 is an alternative for windows native task switcher (<span class=SpellE>Alt+Tab</span>
 / <span class=SpellE>Alt+Shift+Tab</span>).</span><br>
 <br>
-</span><span class=SpellE><b style='mso-bidi-font-weight:normal'><span
+</span>
+<span class=SpellE><b style='mso-bidi-font-weight:normal'><span
 style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;
 mso-fareast-font-family:"Times New Roman";color:#002060'>%ATAPRODUCTNAME%</span></b></span><b
 style='mso-bidi-font-weight:normal'><span style='font-size:11.0pt;mso-bidi-font-size:
@@ -61,9 +62,23 @@ color:#002060'><br>
 <span class=SpellE>FullVersion %ATAPRODUCTFULLVERSION%</span><br>
 %ATACOPYRIGHT%<o:p></o:p></span></b>
 <hr>
-<b style='mso-bidi-font-weight:normal'><span
-style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;
-mso-fareast-font-family:"Times New Roman";color:#C00000'>Thanks to God & everyone :-)</span></b>
+<b style='mso-bidi-font-weight:normal'>
+<span style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;
+mso-fareast-font-family:"Times New Roman";color:#C00000'>First thanks to God :-)</span></b>
+<br><br>
+<style>
+table {border-spacing: 8px 2px;}
+</style>
+<table style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;color:#98B87E' cellspacing="0" cellpadding="0">
+<tr style='color:#774620'><td align="right"><b><a href="https://github.com/ralesi">Rich Alesi</a>, <a href="https://github.com/studgeek">David Rees</a></b></td><td>: AltTab initial version</td><tr>
+<tr style='color:#3D113B'><td align="right"><b><a href="https://autohotkey.com/boards/memberlist.php?mode=viewprofile&u=58">jballi</a></b></td><td>: For AddTooltip, Font Library v0.5</td><tr>
+<tr style='color:#778E64'><td align="right"><b>kdoske</b></td><td>: For CSV Library</td><tr>
+<tr style='color:#53A390'><td align="right"><b><a href="http://www.elegantthemes.com/">elegantthemes</a></b></td><td>: Icon design</td><tr>
+<tr style='color:#4C4AA8'><td align="right"><b>Madhu Sameena</b></td><td>: Suggestions & testing</td><tr>
+<tr style='color:#7D3858'><td align="right"><b>Satish Samayam</b></td><td>: Suggestions & testing</td><tr>
+</table>
+<br>
+<span style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;;color:#049308'><b>And Everyone !!!</b></span>
 </body>
 </html>
 )
@@ -87,7 +102,7 @@ ReleaseNotesFileName    := "ReleaseNotes.txt"
 
 
 ; -----------------------------------------------------------------------------
-; ::Global Variables
+; ::Global Variables and their help
 ;
 ; ********* HiddenWindowList *********
 ; Do NOT worry about the deletion of windows from the HiddenWindowList,
@@ -96,6 +111,13 @@ ReleaseNotesFileName    := "ReleaseNotes.txt"
 ;
 ; ********* Settings variables *********
 ; All Settings are defined/read/write in Settings.Dialog.ahk file
+;
+; ********* HotkeysDisabled *********
+; This variable is used to disable/enable AltTabAlternative application.
+;
+; ********* ATACSHotkeysDisabled *********
+; ATA ContextSensitive hotkeys are ON when the ATA window is visible.
+;
 ; -----------------------------------------------------------------------------
 Global CurSearchString          := ""
 Global NewSearchString          := ""
@@ -108,6 +130,7 @@ Global SelectedRowNumber        := 1
 Global SelectedWinNumber        := 0
 Global LVE_VkCodePrev            =
 Global HotkeysDisabled          := false
+Global ATACSHotkeysDisabled     := false
 Global ActivateWindow           := false
 Global HiddenWindowList         := {}
 Global ShowHiddenWindows        := false
@@ -213,7 +236,7 @@ Menu, Tray, Add, Check for updates, CheckForUpdatesHandler
 Menu, Tray, Add, Run At Startup, RunAtStartupHandler
 Menu, Tray, Add  ; Separator
 Menu, Tray, Add, Exit, ExitHandler
-Menu, Tray, Tip, % ProgramName " " ProductVersion
+Menu, Tray, Tip, %ATAPRODUCTNAME%
 Menu, Tray, Default, About %ATAPRODUCTNAME%
 
 
@@ -640,6 +663,28 @@ ToggleHotkeys(state)    ; (state = "On" or "Off")
 
     Hotkey, %AltHotkey%%TabHotkey%, AltTabAlternative, %state% UseErrorLevel
     Hotkey, %AltHotkey%%ShiftTabHotkey%, AltShiftTabAlternative, %state% UseErrorLevel
+}
+
+
+; -----------------------------------------------------------------------------
+; Toggle AltTabAlternative ContextSensitive Hotkeys
+; -----------------------------------------------------------------------------
+ToggleATACSHotkeys(state)    ; (state = "On" or "Off")
+{
+    Global
+    PrintSub("ToggleATACSHotkeys")
+    PrintKV("ToggleATACSHotkeys: state", state)
+    if (state = "on") {
+        Print("state = on")
+        ATACSHotKeysDisabled := false
+    } else if (state = "off") {
+        Print("state = off")
+        ATACSHotKeysDisabled := true
+    } else {
+        Print("Unknown state")
+        return
+    }
+
     Hotkey, %AltHotkey%%HideWindowHotkey%, ATAHideWindow, %state% UseErrorLevel
     Hotkey, %AltHotkey%%UnHideWindowHotkey%, ATAUnHideWindow, %state% UseErrorLevel
     Hotkey, %AltHotkey%%ToggleHiddenWindowsHotkey%, ATAToggleHiddenWindows, %state% UseErrorLevel
@@ -716,6 +761,7 @@ AltTabCommonFunction(direction)
         Gosub, ShowWindow
         ;~ Gosub, HiddenWindowsFileOpen
         ToggleAltEscHotkey("On")
+        ToggleATACSHotkeys("On")
     }
 
     SB_SetText("")
@@ -909,6 +955,10 @@ ATAToggleHiddenWindows:
     PrintKV("ShowHiddenWindows", ShowHiddenWindows)
     SBUpdateInfo("ShowHiddenWindows: " . (ShowHiddenWindows ? "ON" : "OFF"))
     if (ShowHiddenWindows) {
+        ListViewFontColorBGR            := RGBtoBGR(ListViewFontColor)
+        ListViewBackgroundColorBGR      := RGBtoBGR(ListViewBackgroundColor)
+        ListViewHWFontColorBGR          := RGBtoBGR(ListViewHWFontColor)
+        ListViewHWBackgroundColorBGR    := RGBtoBGR(ListViewHWBackgroundColor)
         LV_ColorInitiateStart()
     }
     else {
@@ -953,7 +1003,8 @@ CreateWindow:
     Gui, 1: Margin, 0, 0
 
     Gui, 1: Font, s%SearchStringFontSize% c%SearchStringFontColor% %SearchStringFontStyle%, %SearchStringFontName%
-    Gui, 1: Add, Text, vTextCtrlVar hwndhTextCtrl Center w%WindowWidth%, Search String: empty
+    Gui, 1: Add, Text, w%WindowWidth% vTextCtrlVar hwndhSearchStringText gMainDoNothingHandler Center, Search String: empty
+    AddTooltip(hSearchStringText, "Filter windows while typing, delete last character using backspace")
 
     Gui, 1: Font, s%ListViewFontSize% c%ListViewFontColor% %ListViewFontStyle%, %ListViewFontName%
     Gui, 1: Add, ListView, w%WindowWidth% h200 AltSubmit +Redraw -Multi NoSort +LV0x2 Background%ListViewBackgroundColor% Count10 gListViewEvent vListView1 HwndListView1Hwnd, %ColumnTitleList%
@@ -963,6 +1014,7 @@ CreateWindow:
     Gui, 1: Font, s%FontSize% c%FontColorEdit% %FontStyle%, %FontType%
     Gui, 1: Font
     Gui, 1: Font, S11, Lucida Console
+    ;~ Gui, 1: Font, S11, Consolas
 
     if (ShowStatusBar) {
         Gui, 1: Add, StatusBar, vMyStatusBar +HwndhMyStatusBar, 
@@ -1465,6 +1517,7 @@ AltTabAlternativeDestroy:
     Gui, 1: Default
     Gosub, DisableTimers
     ToggleAltEscHotkey("Off")
+    ToggleATACSHotkeys("Off")
     
     ; Save the hidden windows information into file
     Gosub, HiddenWindowsFileSave
@@ -1533,10 +1586,12 @@ WindowStoreAttributes(index, windowID, ownerID)
     PID%index%           := procID          ; Store the process id
     Dialog%index%        := Dialog          ; S if found a Dialog window, else 0
 
+    ; If ShowHiddenWindows is turned ON, WM_NOTIFY will be set.
+    ; Hence, the colors passed to LV_ColorChange should be BGR format colors.
     if (ShowHiddenWindows) {
         if (HiddenWindowList.HasKey(windowID)) {
             PrintKV("[WindowStoreAttributes] Applying HideWindow Colors to WindowID", WindowID)
-            LV_ColorChange(index, ListViewHWFontColor, ListViewHWBackgroundColor)
+            LV_ColorChange(index, ListViewHWFontColorBGR, ListViewHWBackgroundColorBGR)
         }
     }
 
@@ -2298,18 +2353,19 @@ LV_ColorChange(Index="", TextColor="", BackColor="") ; change specific line's co
     Global
     ; Use the ListView font color and background color to clear the highlighting
     if (TextColor = "") {
-        TextColor := ListViewFontColorDefault
+        TextColor := ListViewFontColor
     }
     if (BackColor = "") {
-        BackColor := ListViewBackgroundColorDefault
+        BackColor := ListViewBackgroundColor
     }
     
     PrintSub("LV_ColorChange: Index = " . Index . ", TextColor = " . TextColor . ", BackColor = " . BackColor)
     If Index =
     {
-        Print("Clearing all highlights")
+        Print("Clearing all highlights - Begin")
         Loop, %Window_Found_Count% ; or use another count if listview not visible
             LV_ColorChange(A_Index)
+        Print("Clearing all highlights - End")
     }
     Else
     {
@@ -2435,8 +2491,14 @@ SBUpdateInfo(info="") {
 ; -----------------------------------------------------------------------------
 SBUpdatePID() {
     Global SelectedRowNumber
-    procID := PID%SelectedRowNumber%
-    fmtString := Format("`tPID: {1:5}", procID)
+    Global Window_Found_Count
+    if (Window_Found_Count > 0) {
+        procID := PID%SelectedRowNumber%
+        fmtString := Format("`tPID: {1:5}", procID)
+    }
+    else {
+        fmtString := ""
+    }
     SB_SetText(fmtString, SBPartPIDPos)
 }
 
@@ -2447,9 +2509,24 @@ SBUpdatePID() {
 ; -----------------------------------------------------------------------------
 SBUpdateActiveWindowPos() {
     Global SelectedRowNumber
-    fmtString := Format("`t{1:2}/{2:-2}", SelectedRowNumber, Window_Found_Count)
+    Global Window_Found_Count
+    if (Window_Found_Count > 0) {
+        fmtString := Format("`t{1:2}/{2:-2}", SelectedRowNumber, Window_Found_Count)
+    }
+    else {
+        fmtString := ""
+    }
     SB_SetText(fmtString, SBPartActiveWindowPos)
 }
+
+
+; -----------------------------------------------------------------------------
+; ToolTip cannot be displayed if the static text control doesn't have a gHandler.
+; So, adding DoNothing event handler for static text controls to display tooltip
+; information.
+; -----------------------------------------------------------------------------
+MainDoNothingHandler:
+Return
 
 
 ; -----------------------------------------------------------------------------
@@ -2461,4 +2538,5 @@ SBUpdateActiveWindowPos() {
 #Include %A_ScriptDir%\Help.ahk
 #Include %A_ScriptDir%\ReleaseNotes.ahk
 #Include %A_ScriptDir%\SettingsDialog.ahk
-#Include %A_ScriptDir%\CSVLib.ahk
+#Include %A_ScriptDir%\Lib\CSVLib.ahk
+#Include %A_ScriptDir%\Lib\AddTooltip.ahk

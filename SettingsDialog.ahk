@@ -12,8 +12,9 @@ o-----------------------------------------------------------------------------o
 
 #Include %A_ScriptDir%\CommonUtils.ahk
 
-;~ ; This is for my testing
+; This is for my testing
 ;~ If (true) {
+    ;~ #Include %A_ScriptDir%\Lib\AddTooltip.ahk
     ;~ ProductName                 := "AltTabAlternative"
     ;~ SettingsINIFileName         := "AltTabAlternativeSettings.ini"
     ;~ SettingsDirPath             := A_AppData . "\" . ProductName
@@ -100,81 +101,162 @@ ShowSettingsDialog()
     Gui, Margin, 5, 5
 
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xm ym+5 vSDStorageText hwndhSDStorageText, Storage:
+    ; Storage Path & Export Settings
+    ; -----------------------------------------------------------------------------
+    Gui, Add, Text, xm ym+5 vSDStorageText hwndhSDStorageText gDoNothing, Storage:
     Gui, Add, Edit, x+3 yp-3 w406 vSDStorageEdit hwndhSDStorageEdit ReadOnly -Multi R1, %SettingsINIFilePath%
+    AddTooltip(hSDStorageText, "Current storage of AltTabAlternative settings")
+    AddTooltip(hSDStorageEdit, "Current storage of AltTabAlternative settings")
     Gui, Add, Button, x+3 yp-1 w80 vSDExportBtn hwndhSDExportBtn gSDExportBtnHandler, &Export...
+    AddTooltip(hSDExportBtn, "Export your current settings to INI file")
+
     ; -----------------------------------------------------------------------------
-    Gui, Add, GroupBox, xm y33 Section vSearchStringGroupBox W%SDGroupWidth% H%SDGroupHeight% cBlue, SearchString Font
+    ; SearchString Font Group
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xm+5 yp+21 vSDSearchStringFontNameText, &Name:
-    Gui, Add, DropDownList, xm+%SecondColumnOffset% yp-3 w200 R15 vSDSearchStringFontNameDDL Choose%SearchStringFontIndex% gSDSearchStringFontNameDDLHandler, %fontDropDownList%
+    Gui, Add, GroupBox, xm y33 Section vSearchStringGroupBox hwndhSearchStringGroupBox W%SDGroupWidth% H%SDGroupHeight% cBlue, SearchString Font
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xm+5 y+6 vSDSearchStringFontSizeText, &Size:
-    Gui, Add, Edit, xm+%SecondColumnOffset% yp-3 w200
-    Gui, Add, UpDown, vSDSearchStringFontSizeUpDown gSDSearchStringFontSizeUpDownHandler Range8-25, %SearchStringFontSize%
+    Gui, Add, Text, xm+5 yp+21 vSDSearchStringFontNameText hwndhSDSearchStringFontNameText gDoNothing, &Name:
+    Gui, Add, DropDownList, xm+%SecondColumnOffset% yp-3 w200 R15 vSDSearchStringFontNameDDL hwndhSDSearchStringFontNameDDL Choose%SearchStringFontIndex% gSDSearchStringFontNameDDLHandler, %fontDropDownList%
+    AddTooltip(hSDSearchStringFontNameText, "Face name for search string font")
+    AddTooltip(hSDSearchStringFontNameDDL,  "Face name for search string font")
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xm+5 y+6 vSDSearchStringFontColorText, &Color:
-    Gui, Add, Progress, xm+%SecondColumnOffset% yp-3 w200 h21 vSDSearchStringFontColorProgress c%SearchStringFontColor% BackgroundBlack Disabled, 100
-    Gui, Add, Text, xp yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDSearchStringFontColorProgressText gSDSearchStringFontColorChangeBtnHandler
+    Gui, Add, Text, xm+5 y+6 vSDSearchStringFontSizeText hwndhSDSearchStringFontSizeText gDoNothing, &Size:
+    Gui, Add, Edit, xm+%SecondColumnOffset% yp-3 w200 hwndhSDSearchStringFontSizeEdit
+    Gui, Add, UpDown, vSDSearchStringFontSizeUpDown hwndhSDSearchStringFontSizeUpDown gSDSearchStringFontSizeUpDownHandler Range8-25, %SearchStringFontSize%
+    AddTooltip(hSDSearchStringFontSizeText,   "Size of Search string font")
+    AddTooltip(hSDSearchStringFontSizeEdit,   "Size of Search string font")
+    AddTooltip(hSDSearchStringFontSizeUpDown, "Size of Search string font")
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xm+5 y+6 vSDSearchStringFontStyleText, St&yle:
-    Gui, Add, DropDownList, xm+%SecondColumnOffset% yp-3 w200 vSDSearchStringFontStyleDDL gSDSearchStringFontStyleDDLHandler Choose%SearchStringFontStyleIndex%, norm|italic|bold|bold italic
+    Gui, Add, Text, xm+5 y+6 vSDSearchStringFontColorText hwndhSDSearchStringFontColorText gDoNothing, &Color:
+    Gui, Add, Progress, xm+%SecondColumnOffset% yp-3 w200 h21 vSDSearchStringFontColorProgress hwndhSDSearchStringFontColorProgress c%SearchStringFontColor% BackgroundBlack Disabled, 100
+    Gui, Add, Text, xp yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDSearchStringFontColorProgressText hwndhSDSearchStringFontColorProgressText gSDSearchStringFontColorChangeBtnHandler
+    AddTooltip(hSDSearchStringFontColorText,         "Text color for search string font")
+    AddTooltip(hSDSearchStringFontColorProgressText, "Text color for search string font")
+    ; -----------------------------------------------------------------------------
+    Gui, Add, Text, xm+5 y+6 vSDSearchStringFontStyleText hwndhSDSearchStringFontStyleText gDoNothing, St&yle:
+    Gui, Add, DropDownList, xm+%SecondColumnOffset% yp-3 w200 vSDSearchStringFontStyleDDL hwndhSDSearchStringFontStyleDDL gSDSearchStringFontStyleDDLHandler Choose%SearchStringFontStyleIndex%, norm|italic|bold|bold italic
+    AddTooltip(hSDSearchStringFontStyleText, "Text style for search string font")
+    AddTooltip(hSDSearchStringFontStyleDDL,  "Text style for search string font")
     ; -----------------------------------------------------------------------------
 
+    ; -----------------------------------------------------------------------------
+    ; ListView Font Group
     ; -----------------------------------------------------------------------------
     SDControlPosX := SDGroupWidth + 3
     Gui, Add, GroupBox, xm+%SDControlPosX% y33 Section vListViewGroupBox W%SDGroupWidth% H144 cBlue, ListView Font
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 yp+21 vSDListViewFontNameText, &Name:
-    Gui, Add, DropDownList, xs+%SecondColumnOffset% yp-3 w200 R15 vSDListViewFontNameDDL gSDListViewFontNameDDLHandler Choose%ListViewFontIndex%, %fontDropDownList%
+    Gui, Add, Text, xs+5 yp+21 vSDListViewFontNameText hwndhSDListViewFontNameText gDoNothing, &Name:
+    Gui, Add, DropDownList, xs+%SecondColumnOffset% yp-3 w200 R15 vSDListViewFontNameDDL hwndhSDListViewFontNameDDL gSDListViewFontNameDDLHandler Choose%ListViewFontIndex%, %fontDropDownList%
+    AddTooltip(hSDListViewFontNameText, "Face name for list view item font")
+    AddTooltip(hSDListViewFontNameDDL,  "Face name for list view item font")
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6 vSDListViewFontSizeText, &Size:
-    Gui, Add, Edit, xs+%SecondColumnOffset% yp-3 w200
-    Gui, Add, UpDown, vSDListViewFontSizeUpDown gSDListViewFontSizeUpDownHandler Range8-25, %ListViewFontSize%
+    Gui, Add, Text, xs+5 y+6 vSDListViewFontSizeText hwndhSDListViewFontSizeText gDoNothing, &Size:
+    Gui, Add, Edit, xs+%SecondColumnOffset% yp-3 w200 hwndhSDListViewFontSizeEdit gDoNothing
+    Gui, Add, UpDown, vSDListViewFontSizeUpDown hwndhSDListViewFontSizeUpDown gSDListViewFontSizeUpDownHandler Range8-25, %ListViewFontSize%
+    AddTooltip(hSDListViewFontSizeText,   "Size of list view item font")
+    AddTooltip(hSDListViewFontSizeEdit,   "Size of list view item font")
+    AddTooltip(hSDListViewFontSizeUpDown, "Size of list view item font")
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6 vSDListViewFontColorText, &Color:
+    Gui, Add, Text, xs+5 y+6 vSDListViewFontColorText hwndhSDListViewFontColorText gDoNothing, &Color:
     Gui, Add, Progress, xs+%SecondColumnOffset% yp-3 w200 h21 vSDListViewFontColorProgress c%ListViewFontColor% BackgroundBlack Disabled, 100
-    Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewFontColorProgressText gSDListViewFontColorChangeBtnHandler
+    Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewFontColorProgressText hwndhSDListViewFontColorProgressText gSDListViewFontColorChangeBtnHandler
+    AddTooltip(hSDListViewFontColorText,         "Text color for list view item font")
+    AddTooltip(hSDListViewFontColorProgressText, "Text color for list view item font")
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6 vSDListViewFontStyleText, St&yle:
-    Gui, Add, DropDownList, xs+%SecondColumnOffset% yp-3 w200 vSDListViewFontStyleDDL gSDListViewFontStyleDDLHandler Choose%ListViewFontStyleIndex%, norm|italic|bold|bold italic
+    Gui, Add, Text, xs+5 y+6 vSDListViewFontStyleText hwndhSDListViewFontStyleText gDoNothing, St&yle:
+    Gui, Add, DropDownList, xs+%SecondColumnOffset% yp-3 w200 vSDListViewFontStyleDDL hwndhSDListViewFontStyleDDL gSDListViewFontStyleDDLHandler Choose%ListViewFontStyleIndex%, norm|italic|bold|bold italic
+    AddTooltip(hSDListViewFontStyleText, "Text style for list view item font")
+    AddTooltip(hSDListViewFontStyleDDL,  "Text style for list view item font")
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6 vSDListViewBkColorText, &Bk Color:
+    Gui, Add, Text, xs+5 y+6 vSDListViewBkColorText hwndhSDListViewBkColorText gDoNothing, &Bk Color:
     Gui, Add, Progress, xs+%SecondColumnOffset% yp-3 w200 h21 vSDListViewBkColorProgress c%ListViewBackgroundColor% BackgroundBlack Disabled, 100
-    Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewBkColorProgressText gSDListViewBkColorChangeBtnHandler
+    Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewBkColorProgressText hwndhSDListViewBkColorProgressText gSDListViewBkColorChangeBtnHandler
+    AddTooltip(hSDListViewBkColorText,         "Background color for list view item")
+    AddTooltip(hSDListViewBkColorProgressText, "Background color for list view item")
     ; -----------------------------------------------------------------------------
 
     ColumnOffset := 141
     ; -----------------------------------------------------------------------------
-    Gui, Add, GroupBox, xm Section vGeneralGroupBox W%SDGroupWidth% H132 cBlue, General
+    ; General Settings Group
     ; -----------------------------------------------------------------------------
-    Gui, Add, Checkbox, xs+5 ys+20 vSDPromptTerminateAllCheckBox gSDPromptTerminateAllCheckBoxHandler Checked%PromptTerminateAll%, &PromptTerminateAll
+    Gui, Add, GroupBox, xm Section vGeneralGroupBox W%SDGroupWidth% H153 cBlue, General
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6, Window &Transparency
-    Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48
-    Gui, Add, UpDown, vSDWindowTransparencyUpDown gSDWindowTransparencyUpDownHandler Range100-255, %WindowTransparency%
+    Gui, Add, Checkbox, xs+5 ys+20 vSDShowStatusBarCheckBox hwndhSDShowStatusBarCheckBox gSDShowStatusBarCheckBoxHandler Checked%ShowStatusBar%, &Show StatusBar
+    AddTooltip(hSDShowStatusBarCheckBox, "Show status bar")
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6, Window &Width (`%)
-    Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48
-    Gui, Add, UpDown, vSDWindowWidthPercentageUpDown gSDWindowWidthPercentageUpDownHandler Range40-90, %WindowWidthPercentage%
+    Gui, Add, Checkbox, xs+5 y+6 vSDPromptTerminateAllCheckBox hwndhSDPromptTerminateAllCheckBox gSDPromptTerminateAllCheckBoxHandler Checked%PromptTerminateAll%, &PromptTerminateAll
+    AddTooltip(hSDPromptTerminateAllCheckBox, "Prompts for confirmation before terminating a window/process")
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6, Window &Height Max (`%)
-    Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48
-    Gui, Add, UpDown, vSDWindowHeightMaxPercentageUpDown gSDWindowHeightMaxPercentageUpDownHandler Range10-90, %WindowHeightMaxPercentage%
+    Gui, Add, Text, xs+5 y+6 hwndhSDWindowTransparencyText gDoNothing, Window &Transparency
+    Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48 hwndhSDWindowTransparencyEdit
+    Gui, Add, UpDown, vSDWindowTransparencyUpDown hwndhSDWindowTransparencyUpDown gSDWindowTransparencyUpDownHandler Range100-255, %WindowTransparency%
+    AddTooltip(hSDWindowTransparencyText,   "Indicates the degree of transparency.`n    0 - makes the window invisible.`n255 - makes it opaque.")
+    AddTooltip(hSDWindowTransparencyEdit,   "Indicates the degree of transparency.`n    0 - makes the window invisible.`n255 - makes it opaque.")
+    AddTooltip(hSDWindowTransparencyUpDown, "Indicates the degree of transparency.`n    0 - makes the window invisible.`n255 - makes it opaque.")
     ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6 vSDCheckForUpdatesText, Check for &updates
-    Gui, Add, DropDownList, xs+%ColumnOffset% yp-3 w60 vSDCheckForUpdatesDDL gSDCheckForUpdatesDDLHandler Choose%UpdateOptionsIndex%, %UpdateOptionsList%
+    Gui, Add, Text, xs+5 y+6 hwndhSDWindowWidthPercentageText gDoNothing, Window &Width (`%)
+    Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48 hwndhSDWindowWidthPercentageEdit
+    Gui, Add, UpDown, vSDWindowWidthPercentageUpDown hwndhSDWindowWidthPercentageUpDown gSDWindowWidthPercentageUpDownHandler Range40-90, %WindowWidthPercentage%
+    AddTooltip(hSDWindowWidthPercentageText, "Main window width wrt percentage of screen width")
+    AddTooltip(hSDWindowWidthPercentageEdit, "Main window width wrt percentage of screen width")
+    AddTooltip(hSDWindowWidthPercentageUpDown, "Main window width wrt percentage of screen width")
+    ; -----------------------------------------------------------------------------
+    Gui, Add, Text, xs+5 y+6 hwndhSDWindowHeightMaxPercentageText gDoNothing, Window &Height Max (`%)
+    Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48 hwndhSDWindowHeightMaxPercentageEdit
+    Gui, Add, UpDown, vSDWindowHeightMaxPercentageUpDown hwndhSDWindowHeightMaxPercentageUpDown gSDWindowHeightMaxPercentageUpDownHandler Range10-90, %WindowHeightMaxPercentage%
+    AddTooltip(hSDWindowHeightMaxPercentageText,   "Main window maximum height wrt percentage of screen height`n`nIf there are more number of processes which exceeds the WindowHeightMax to accommodate `nall the tasks then resize the window to WindowHeightMax according scroll bar presense")
+    AddTooltip(hSDWindowHeightMaxPercentageEdit,   "Main window maximum height wrt percentage of screen height`n`nIf there are more number of processes which exceeds the WindowHeightMax to accommodate `nall the tasks then resize the window to WindowHeightMax according scroll bar presense")
+    AddTooltip(hSDWindowHeightMaxPercentageUpDown,   "Main window maximum height wrt percentage of screen height`n`nIf there are more number of processes which exceeds the WindowHeightMax to accommodate `nall the tasks then resize the window to WindowHeightMax according scroll bar presense")
+    ; -----------------------------------------------------------------------------
+    Gui, Add, Text, xs+5 y+6 vSDCheckForUpdatesText hwndhSDCheckForUpdatesText gDoNothing, Check for &updates
+    Gui, Add, DropDownList, xs+%ColumnOffset% yp-3 w60 vSDCheckForUpdatesDDL hwndhSDCheckForUpdatesDDL gSDCheckForUpdatesDDLHandler Choose%UpdateOptionsIndex%, %UpdateOptionsList%
+    AddTooltip(hSDCheckForUpdatesText, "How frequently check for updates")
+    AddTooltip(hSDCheckForUpdatesDDL,  "How frequently check for updates")
+    ; -----------------------------------------------------------------------------
+    
+    ; -----------------------------------------------------------------------------
+    ; HiddenWindows Font Group
+    ; -----------------------------------------------------------------------------
+    SDControlPosX := SDGroupWidth + 3
+    SDControlPosY := SDGroupHeight + 38
+    Gui, Add, GroupBox, xm+%SDControlPosX% y%SDControlPosY% Section vHiddenWindowsGroupBox W%SDGroupWidth% H71 cBlue, Hidden Windows Font
+
+    Gui, Add, Text, xs+5 ys+20 vSDListViewHWFontColorText hwndhSDListViewHWFontColorText gDoNothing, &Color:
+    Gui, Add, Progress, xs+%SecondColumnOffset% yp-3 w200 h21 vSDListViewHWFontColorProgress c%ListViewHWFontColor% BackgroundBlack Disabled, 100
+    Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewHWFontColorProgressText hwndhSDListViewHWFontColorProgressText gSDListViewHWFontColorChangeBtnHandler
+    AddTooltip(hSDListViewHWFontColorText,         "Text color for list view hidden window item font")
+    AddTooltip(hSDListViewHWFontColorProgressText, "Text color for list view hidden window item font")
+    ; -----------------------------------------------------------------------------
+    Gui, Add, Text, xs+5 y+6 vSDListViewHWBkColorText hwndhSDListViewHWBkColorText gDoNothing, &Bk Color:
+    Gui, Add, Progress, xs+%SecondColumnOffset% yp-3 w200 h21 vSDListViewHWBkColorProgress c%ListViewHWBackgroundColor% BackgroundBlack Disabled, 100
+    Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewHWBkColorProgressText hwndhSDListViewHWBkColorProgressText gSDListViewHWBkColorChangeBtnHandler
+    AddTooltip(hSDListViewHWBkColorText,         "Background color for list view hidden window item")
+    AddTooltip(hSDListViewHWBkColorProgressText, "Background color for list view hidden window item")
     ; -----------------------------------------------------------------------------
     
     Gui, Add, Button, xm  w80 vSDOkBtn gOkBtnHandler hwndhSDOkBtn +Default, &OK
-    Gui, Add, Button, x+3 w80 vSDApplyBtn gSDApplyBtnHandler -Default Disabled, &Apply
+    AddTooltip(hSDOkBtn, "Save the settings to INI file if modified and close dialog")
+    Gui, Add, Button, x+3 w80 vSDApplyBtn hwndhSDApplyBtn gSDApplyBtnHandler -Default Disabled, &Apply
+    AddTooltip(hSDApplyBtn, "Save the modified settings to INI file and Don't close dialog")
     Gui, Add, Button, x+3 w80 vSDCancelBtn gSDCancelBtnHandler hwndhSDCancelBtn -Default Disabled, Cance&l
-    Gui, Add, Button, x+3 w80 vSDResetBtn gResetBtnHandler, &Reset...
-    Gui, Add, Button, x+3 w80 vSDImportBtn gImportBtnHandler, &Import...
+    AddTooltip(hSDCancelBtn, "Don't save the modified settings to INI file and close dialog")
+    Gui, Add, Button, x+3 w80 vSDResetBtn hwndhSDResetBtn gResetBtnHandler, &Reset...
+    AddTooltip(hSDResetBtn, "Reset all settings to defaults")
+    Gui, Add, Button, x+3 w80 vSDImportBtn hwndhSDImportBtn gImportBtnHandler, &Import...
+    AddTooltip(hSDImportBtn, "Import settings from INI file")
     
     Gui, Show, AutoSize Center
     Return
     
+
+; -----------------------------------------------------------------------------
+; ToolTip cannot be displayed if the static text control doesn't have a gHandler.
+; So, adding DoNothing event handler for static text controls to display tooltip
+; information.
+; -----------------------------------------------------------------------------
+DoNothing:
+Return
+
 
 ; -----------------------------------------------------------------------------
 ; SettingsDialog GuiSize
@@ -185,7 +267,7 @@ SettingsDialogGuiSize:
     WinGetPos, X, Y, Width, Height, A
     MoveControlsToHorizontalCenter("SDOkBtn|SDApplyBtn|SDCancelBtn|SDResetBtn|SDImportBtn", A_GuiWidth)
     ;~ AutoXYWH("w", "StorageEdit")
-    GuiControl, Move, GeneralGroupBox, w531
+    ;~ GuiControl, Move, GeneralGroupBox, w531
     ControlFocus, , ahk_id %hSDOkBtn%
 Return
 
@@ -213,11 +295,14 @@ ApplySettings:
 
     GuiControlGet, ListViewFontName, , SDListViewFontNameDDL
     GuiControlGet, ListViewFontSize, , SDListViewFontSizeUpDown
-    ListViewFontColor := tSDListViewFontColor
+    ListViewFontColor           := tSDListViewFontColor
     GuiControlGet, ListViewFontStyle, , SDListViewFontStyleDDL
-    ListViewBackgroundColor := tSDListViewBackgroundColor
+    ListViewBackgroundColor     := tSDListViewBackgroundColor
+    ListViewHWFontColor         := tSDListViewHWFontColor
+    ListViewHWBackgroundColor   := tSDListViewHWBackgroundColor
     
     GuiControlGet, PromptTerminateAll, , SDPromptTerminateAllCheckBox
+    GuiControlGet, ShowStatusBar, , SDShowStatusBarCheckBox
     GuiControlGet, WindowTransparency, , SDWindowTransparencyUpDown
     GuiControlGet, WindowWidthPercentage, , SDWindowWidthPercentageUpDown
     GuiControlGet, WindowHeightMaxPercentage, , SDWindowHeightMaxPercentageUpDown
@@ -408,6 +493,39 @@ Return
 
 
 ; -----------------------------------------------------------------------------
+; SDListViewHW FontColor Change
+; -----------------------------------------------------------------------------
+SDListViewHWFontColorChangeBtnHandler:
+    PrintKV("tSDListViewHWFontColor", tSDListViewHWFontColor)
+    Color := tSDListViewHWFontColor
+    PrintKV("Before Color", Color)
+    if (ChooseColor(Color, hSettingsDialog) and Color != tSDListViewHWFontColor) {
+        PrintKV("After Color", Color)
+        tSDListViewHWFontColor := Color
+        GuiControl, +c%tSDListViewHWFontColor%, SDListViewHWFontColorProgress
+        CheckSettingsModified()
+    }
+Return
+
+
+; -----------------------------------------------------------------------------
+; SDListViewHW BackgroundColor Change
+; -----------------------------------------------------------------------------
+SDListViewHWBkColorChangeBtnHandler:
+    PrintKV("tSDListViewHWBackgroundColor", tSDListViewHWBackgroundColor)
+    Color := tSDListViewHWBackgroundColor
+    PrintKV("Before Color", Color)
+    if (ChooseColor(Color, hSettingsDialog) and Color != tSDListViewHWBackgroundColor) {
+        PrintKV("After Color", Color)
+        tSDListViewHWBackgroundColor := Color
+        GuiControl, Text, SDListViewHWBkColorEdit, %ListViewBkColor%
+        GuiControl, +c%tSDListViewHWBackgroundColor%, SDListViewHWBkColorProgress
+        CheckSettingsModified()
+    }
+Return
+
+
+; -----------------------------------------------------------------------------
 ; SDListView FontStyle Change
 ; -----------------------------------------------------------------------------
 SDListViewFontStyleDDLHandler:
@@ -421,6 +539,15 @@ Return
 ; -----------------------------------------------------------------------------
 SDPromptTerminateAllCheckBoxHandler:
     GuiControlGet, tSDPromptTerminateAll, , SDPromptTerminateAllCheckBox
+    CheckSettingsModified()
+Return
+
+
+; -----------------------------------------------------------------------------
+; ShowStatusBar CheckBox Handler
+; -----------------------------------------------------------------------------
+SDShowStatusBarCheckBoxHandler:
+    GuiControlGet, tSDShowStatusBar, , SDShowStatusBarCheckBox
     CheckSettingsModified()
 Return
 
@@ -489,6 +616,9 @@ IsSettingsModified() {
         or tSDListViewFontColor           != ListViewFontColor
         or tSDListViewFontStyle           != ListViewFontStyle
         or tSDListViewBackgroundColor     != ListViewBackgroundColor	
+        or tSDListViewHWFontColor         != ListViewHWFontColor
+        or tSDListViewHWBackgroundColor   != ListViewHWBackgroundColor	
+        or tSDShowStatusBar               != ShowStatusBar
         or tSDPromptTerminateAll          != PromptTerminateAll
         or tSDWindowTransparency          != WindowTransparency
         or tSDWindowWidthPercentage       != WindowWidthPercentage
@@ -590,16 +720,11 @@ CreateDefaultINIFile(SettingsINIFilePath) {
 ; Configuration/settings file for AltTabAlternative.
 ; Notes:
 ;   1. Do NOT edit manually if you are not familiar with settings.
-;   2. Intentionally NOT providing a way in GUI to change the font/background
-;      color of a hidden window. If you want to change you can try to change
-;      the ListView's HWFontColor, HWBackgroundColor properties.
-;   3. Color Format is RGB(0xAA, 0xBB, 0xCC) => 0xAABBCC, in hex format.
+;   2. Color Format is RGB(0xAA, 0xBB, 0xCC) => 0xAABBCC, in hex format.
 ;      0xAA : Red component
 ;      0xBB : Green component
 ;      0xCC : Blue component
-;   4. Presently NOT displaying every action in status bar, this is in progress.
-;      So, not providing a checkbox control for ShowStatusBar setting.
-;      Please change the ShowStatusBar to 1 manually to display StatusBar.
+;   3. Presently NOT displaying every action in status bar, this is in progress.
 ; -----------------------------------------------------------------------------
 [SearchString]
 FontName=%SearchStringFontNameDefault%
@@ -680,15 +805,13 @@ IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
         ReadVariable("WindowHeightMaxPercentage",   SettingsINIFilePathIn, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
         ReadVariable("CheckForUpdates",             SettingsINIFilePathIn, "General",      "CheckForUpdates",           CheckForUpdatesDefault)
         
-        ; Convert these RGB format colors to BGR format colors before using them
-        ListViewHWFontColor       := RGBtoBGR(ListViewHWFontColor)
-        ListViewHWBackgroundColor := RGBtoBGR(ListViewHWBackgroundColor)
+        ListViewFontColorBGR            := RGBtoBGR(ListViewFontColor)
+        ListViewBackgroundColorBGR      := RGBtoBGR(ListViewBackgroundColor)
+        ListViewHWFontColorBGR          := RGBtoBGR(ListViewHWFontColor)
+        ListViewHWBackgroundColorBGR    := RGBtoBGR(ListViewHWBackgroundColor)
     }
     else
     {
-        ; Convert these BGR format colors to RGB format colors before writing to INI
-        ListViewHWFontColor       := RGBtoBGR(ListViewHWFontColor)
-        ListViewHWBackgroundColor := RGBtoBGR(ListViewHWBackgroundColor)
         WriteVariable(SearchStringFontName,         SettingsINIFilePathIn, "SearchString", "FontName",                  SearchStringFontNameDefault)
         WriteVariable(SearchStringFontSize,         SettingsINIFilePathIn, "SearchString", "FontSize",                  SearchStringFontSizeDefault)
         WriteVariable(SearchStringFontColor,        SettingsINIFilePathIn, "SearchString", "FontColor",                 SearchStringFontColorDefault)
@@ -945,20 +1068,23 @@ GetCheckForUpdatesIndex(UpdateOptionsList, updateIn) {
 StoreSettingsInTempVariables() {
     Global
     PrintSub("StoreSettingsInTempVariables")
-    tSDSearchStringFontName        := SearchStringFontName
-    tSDSearchStringFontSize        := SearchStringFontSize
-    tSDSearchStringFontColor       := SearchStringFontColor
-    tSDSearchStringFontStyle       := SearchStringFontStyle
-    tSDListViewFontName            := ListViewFontName
-    tSDListViewFontSize            := ListViewFontSize
-    tSDListViewFontColor           := ListViewFontColor
-    tSDListViewFontStyle           := ListViewFontStyle
-    tSDListViewBackgroundColor     := ListViewBackgroundColor	
-    tSDPromptTerminateAll          := PromptTerminateAll
-    tSDWindowTransparency          := WindowTransparency
-    tSDWindowWidthPercentage       := WindowWidthPercentage
-    tSDWindowHeightMaxPercentage   := WindowHeightMaxPercentage
-    tSDCheckForUpdates             := CheckForUpdates
+    tSDSearchStringFontName         := SearchStringFontName
+    tSDSearchStringFontSize         := SearchStringFontSize
+    tSDSearchStringFontColor        := SearchStringFontColor
+    tSDSearchStringFontStyle        := SearchStringFontStyle
+    tSDListViewFontName             := ListViewFontName
+    tSDListViewFontSize             := ListViewFontSize
+    tSDListViewFontColor            := ListViewFontColor
+    tSDListViewFontStyle            := ListViewFontStyle
+    tSDListViewBackgroundColor      := ListViewBackgroundColor	
+    tSDListViewHWFontColor          := ListViewHWFontColor
+    tSDListViewHWBackgroundColor    := ListViewHWBackgroundColor
+    tSDShowStatusBar                := ShowStatusBar
+    tSDPromptTerminateAll           := PromptTerminateAll
+    tSDWindowTransparency           := WindowTransparency
+    tSDWindowWidthPercentage        := WindowWidthPercentage
+    tSDWindowHeightMaxPercentage    := WindowHeightMaxPercentage
+    tSDCheckForUpdates              := CheckForUpdates
 }
 
 
@@ -979,7 +1105,7 @@ DefineDefaultSettings() {
     ListViewBackgroundColorDefault      := 0x000000
     ListViewHWFontColorDefault          := 0x000000
     ListViewHWBackgroundColorDefault    := 0xFFC90E
-    ShowStatusBarDefault                := 0
+    ShowStatusBarDefault                := 1
     PromptTerminateAllDefault           := 1
     WindowTransparencyDefault           := 222
     WindowWidthPercentageDefault        := 45
@@ -1143,4 +1269,4 @@ IsLatestRelease(programVersion, currentVersion) {
 }
 
 
-#Include %A_ScriptDir%\Fnt.ahk
+#Include %A_ScriptDir%\Lib\Fnt.ahk
