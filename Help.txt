@@ -102,6 +102,14 @@ x-----------------------------------------------------------------------------x
 | ListView Font        | Font (name, size, color, background color & style)   |
 |                      | of ListView control.                                 |
 |----------------------+------------------------------------------------------|
+| Show/Hide StatusBar  | StatusBar has 3 parts, to display the following:     |
+|                      |   1. Every user action                               |
+|                      |   2. SelectedWindowPos/TotalCount                    |
+|                      |   3. Selected Window's ProcessID                     |
+|                      |                                                      |
+|                      | Note: Showing every user action in status bar is not |
+|                      |   completed yet.                                     |
+|----------------------+------------------------------------------------------|
 | PromptTerminateAll   | Prompts for confirmation before terminating.         |
 |----------------------+------------------------------------------------------|
 | Window Transparency  | Indicate the degree of transparency.                 |
@@ -129,21 +137,8 @@ x-----------------------------------------------------------------------------x
 |----------------------+------------------------------------------------------|
 | Reset                | Reset settings to default settings.                  |
 |----------------------+------------------------------------------------------|
-| Font/Background color| Not providing a way to change from UI. You can change|
-| for hidden windows   |   these settings in INI file manually.               |
-|----------------------+------------------------------------------------------|
-| Show/Hide StatusBar  | Not providing a way to show/hide StatusBar from UI.  |
-|                      | Please change ShowStatusBar setting in INI file to   |
-|                      |   1 - Show StatusBar                                 |
-|                      |   0 - Hide StatusBar                                 |
-|                      |                                                      |
-|                      | StatusBar has 3 parts, to display the following:     |
-|                      |   1. Every user action                               |
-|                      |   2. SelectedWindowPos/TotalCount                    |
-|                      |   3. Selected Window's ProcessID                     |
-|                      |                                                      |
-|                      | Note: Showing every user action in status bar is not |
-|                      |   completed yet. So, status bar is hidden initially. |
+| Font/Background color| Hidden windows are displayed using these font fore   |
+| for hidden windows   |  ground & background.                                |
 |----------------------+------------------------------------------------------|
 | Import/Export        | Import/Export settings from/to an external INI file. |
 x-----------------------------------------------------------------------------x

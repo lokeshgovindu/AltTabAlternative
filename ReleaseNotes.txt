@@ -12,16 +12,16 @@ Known Issues
 ---------------------------------
 + Hide/un-hide windows using keyboard shortcuts only.
   Intentionally NOT providing a way to hide/un-hide windows from context menu.
-  You can change them manually in AltTabAlternativeSettings.ini file.
-  a. Hidden windows displayed with different color from the default list view
-     font/background color in list view.
++ Can change the font color / background color for hidden windows in list view.
 + Added StatusBar to display the following in parts:
   1. Every user action (partially done)
   2. SelectedWindowPos/TotalCount
   3. Selected Window's ProcessID
-  NOTE | This funcationality is partially done. So, initially StatusBar is
-       | hidden, please change the ShowStatusBar setting to 1 in settings INI
-       | file to display StatusBar.
+  NOTE: This funcationality is partially done.
++ Check to show/hide the status bar.
++ Display tooltips on mouseover in settings dialog.
+- Hidden windows functionality hotkeys should be available only when
+  AltTabAlternative is visible.
 
 2016.2 new features and bug fixes
 ---------------------------------
