@@ -74,8 +74,8 @@ table {border-spacing: 8px 2px;}
 <tr style='color:#3D113B'><td align="right"><b><a href="https://autohotkey.com/boards/memberlist.php?mode=viewprofile&u=58">jballi</a></b></td><td>: For AddTooltip, Font Library v0.5</td><tr>
 <tr style='color:#778E64'><td align="right"><b>kdoske</b></td><td>: For CSV Library</td><tr>
 <tr style='color:#53A390'><td align="right"><b><a href="http://www.elegantthemes.com/">elegantthemes</a></b></td><td>: Icon design</td><tr>
-<tr style='color:#4C4AA8'><td align="right"><b>Madhu Sameena</b></td><td>: Suggestions & testing</td><tr>
-<tr style='color:#7D3858'><td align="right"><b>Satish Samayam</b></td><td>: Suggestions & testing</td><tr>
+<tr style='color:#4C4AA8'><td align="right"><b><a href="https://in.linkedin.com/in/madhu-sameena-05084b38">Madhu Sameena</a></b></td><td>: Suggestions & testing</td><tr>
+<tr style='color:#7D3858'><td align="right"><b><a href="https://in.linkedin.com/in/satish-samayam-077a4a2b">Satish Samayam</a></b></td><td>: Suggestions & testing</td><tr>
 </table>
 <br>
 <span style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;;color:#049308'><b>And Everyone !!!</b></span>
@@ -97,7 +97,7 @@ TrayIcon                := "AltTabAlternative.ico"
 ApplicationName         := ProductName
 ProgramName             := ApplicationName
 ReadMeFileName          := "ReadMe.txt"
-HelpFileName            := "Help.txt"
+HelpFileName            := "Help.mht"
 ReleaseNotesFileName    := "ReleaseNotes.txt"
 
 
@@ -269,7 +269,7 @@ RunCheckForUpdates()
 ; -----------------------------------------------------------------------------
 ; Create AltTabAlternative Window ContextMenu here
 ; -----------------------------------------------------------------------------
-Menu, ATAContextMenu, Add, &About %ATAPRODUCTNAME%, AboutHandler
+Menu, ATAContextMenu, Add, &About %ATAPRODUCTNAME%`tShift+F1, AboutHandler
 Menu, ATAContextMenu, Add  ; Separator
 Menu, ATAContextMenu, Add, &ReadMe, ReadMeHandler
 Menu, ATAContextMenu, Add, &Help`tF1, HelpHandler
@@ -289,7 +289,7 @@ Menu, ListViewContextMenu, Add  ; Separator
 Menu, ListViewContextMenu, Add, &Close All Windows`tNumpadDiv (/), CloseAllWindowsHandler
 Menu, ListViewContextMenu, Add, &Kill All Processes`tShift+NumpadDiv (/), KillAllProcessesHandler
 Menu, ListViewContextMenu, Add  ; Separator
-Menu, ListViewContextMenu, Add, &About %ATAPRODUCTNAME%, AboutHandler
+Menu, ListViewContextMenu, Add, &About %ATAPRODUCTNAME%`tShift+F1, AboutHandler
 Menu, ListViewContextMenu, Add, &ReadMe, ReadMeHandler
 Menu, ListViewContextMenu, Add, &Help`tF1, HelpHandler
 Menu, ListViewContextMenu, Add, &Release Notes, ReleaseNotesHandler
@@ -1117,6 +1117,17 @@ DisplayList:
                 title := WindowTitle
                 ;~ PrintKV("Title", WindowTitle)
             }
+            else if (windowES = 0x0 && ownerES = 0x0) {
+                ; I have no idea why the windowES or ownerES are 0x0 when watching videos in fullscreen
+                ; mode in Google Chrome / Internet Explorer and etc, but getting the title correctly.
+                ;~ FileAppend, windowES = 0x0 && ownerES = 0x0`n, *
+                isAltTabWindow := true
+                WinGetTitle, windowTitle, ahk_id %windowID%
+                if (windowTitle = "") {
+                    WinGetTitle, windowTitle, ahk_id %ownerID%
+                }
+                title := WindowTitle
+            }
             
             if (isAltTabWindow) {
                 WinGet, procPath, ProcessPath, ahk_id %windowID%
@@ -1265,7 +1276,12 @@ ListViewEvent:
         ; -----------------------------------------------------------------------------
         if (vkCode = GetKeyVK("F1")) {
             Gosub, AltTabAlternativeDestroy
-            ShowHelp()
+            if (IsShiftKeyDown) {
+                AboutDialog()
+            }
+            else {
+                ShowHelp()
+            }
             Return
         }
         ; -----------------------------------------------------------------------------
@@ -2066,6 +2082,17 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
                 }
                 title := WindowTitle
                 ;~ PrintKV("Title", WindowTitle)
+            }
+            else if (windowES = 0x0 && ownerES = 0x0) {
+                ; I have no idea why the windowES or ownerES are 0x0 when watching videos in fullscreen
+                ; mode in Google Chrome / Internet Explorer and etc, but getting the title correctly.
+                ;~ FileAppend, windowES = 0x0 && ownerES = 0x0`n, *
+                isAltTabWindow := true
+                WinGetTitle, windowTitle, ahk_id %windowID%
+                if (windowTitle = "") {
+                    WinGetTitle, windowTitle, ahk_id %ownerID%
+                }
+                title := WindowTitle
             }
 
             if (isAltTabWindow)

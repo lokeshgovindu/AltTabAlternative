@@ -85,7 +85,7 @@ x-----------------------------------------------------------------------------x
 | +==========================================+                                |
 |                                                                             |
 |                                                                             |
-| Configuration INF File                                                      |
+| Configuration INI File                                                      |
 | ----------------------                                                      |
 | Used to read/write the settings of application.                             |
 |                                                                             |

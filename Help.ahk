@@ -10,6 +10,19 @@ o-----------------------------------------------------------------------------o
 o-----------------------------------------------------------------------------o
 */
 
+; This is for my testing
+;~ if (true) {
+	;~ HelpFileName := "Help.mht"
+	;~ HelpFilePath := A_ScriptDir . "\" . HelpFileName
+	;~ #Include %A_ScriptDir%\CommonUtils.ahk
+
+	;~ ShowHelp()
+	;~ Return
+
+	;~ Esc::
+		;~ ExitApp
+;~ }
+
 ShowHelp()
 {
 	Global
@@ -29,7 +42,9 @@ ShowHelp()
     Gui, Help: Font, s11, Lucida Console
     Gui, Help: Default
     Gui, Help: Margin, 0, 0
-    Gui, Help: Add, Edit, w%HelpWindowWidth% h%HelpWindowHeight% -Wrap Multi HScroll VScroll vHelpEditVar hwndhHelpEdit +ReadOnly, %FileContents%
+	Gui, Help: Add, ActiveX, w%HelpWindowWidth% h%HelpWindowHeight% vShellExpolorer Multi +Border, Shell.Explorer
+	ShellExpolorer.Navigate(HelpFilePath)
+	ShellExpolorer.silent := true
 
     Gui, Help: Show, AutoSize Center
 	ControlSend, , ^{Home}, ahk_id %hHelpWindow%
@@ -43,6 +58,6 @@ ShowHelp()
 	HelpGuiSize:
 		If (A_EventInfo = 1) ; The window has been minimized.
 			Return
-		AutoXYWH("wh", "HelpEditVar")
+		AutoXYWH("wh", "ShellExpolorer")
 	Return
 } ; ShowHelp ends here!

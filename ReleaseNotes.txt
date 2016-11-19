@@ -20,8 +20,11 @@ Known Issues
   NOTE: This funcationality is partially done.
 + Check to show/hide the status bar.
 + Display tooltips on mouseover in settings dialog.
++ Help file is HTML format, earlier it was text format.
 - Hidden windows functionality hotkeys should be available only when
   AltTabAlternative is visible.
+- Display browser (Chrome, IE, and etc) in AltTab windows list when watching
+  videos with fullscreen mode.
 
 2016.2 new features and bug fixes
 ---------------------------------

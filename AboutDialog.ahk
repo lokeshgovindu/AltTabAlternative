@@ -54,8 +54,8 @@ o-----------------------------------------------------------------------------o
 ;~ <tr style='color:#3D113B'><td align="right"><b><a href="https://autohotkey.com/boards/memberlist.php?mode=viewprofile&u=58">jballi</a></b></td><td>: For AddTooltip, Font Library v0.5</td><tr>
 ;~ <tr style='color:#778E64'><td align="right"><b>kdoske</b></td><td>: For CSV Library</td><tr>
 ;~ <tr style='color:#53A390'><td align="right"><b><a href="http://www.elegantthemes.com/">elegantthemes</a></b></td><td>: Icon design</td><tr>
-;~ <tr style='color:#4C4AA8'><td align="right"><b>Madhu Sameena</b></td><td>: Suggestions & testing</td><tr>
-;~ <tr style='color:#7D3858'><td align="right"><b>Satish Samayam</b></td><td>: Suggestions & testing</td><tr>
+;~ <tr style='color:#4C4AA8'><td align="right"><b><a href="https://in.linkedin.com/in/madhu-sameena-05084b38">Madhu Sameena</a></b></td><td>: Suggestions & testing</td><tr>
+;~ <tr style='color:#7D3858'><td align="right"><b><a href="https://in.linkedin.com/in/satish-samayam-077a4a2b">Satish Samayam</a></b></td><td>: Suggestions & testing</td><tr>
 ;~ </table>
 ;~ <br>
 ;~ <span style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;;color:#049308'><b>And Everyone !!!</b></span>
@@ -69,6 +69,7 @@ o-----------------------------------------------------------------------------o
 	;~ Esc::
 		;~ ExitApp
 ;~ }
+
 
 AboutDialog()
 {
