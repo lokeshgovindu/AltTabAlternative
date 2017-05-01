@@ -179,9 +179,12 @@ ShowSettingsDialog()
     ; -----------------------------------------------------------------------------
     ; General Settings Group
     ; -----------------------------------------------------------------------------
-    Gui, Add, GroupBox, xm Section vGeneralGroupBox W%SDGroupWidth% H153 cBlue, General
+    Gui, Add, GroupBox, xm Section vGeneralGroupBox W%SDGroupWidth% H174 cBlue, General
     ; -----------------------------------------------------------------------------
-    Gui, Add, Checkbox, xs+5 ys+20 vSDShowStatusBarCheckBox hwndhSDShowStatusBarCheckBox gSDShowStatusBarCheckBoxHandler Checked%ShowStatusBar%, &Show StatusBar
+    Gui, Add, Checkbox, xs+5 ys+20 vSDBacktickFilterWindowsCheckBox hwndhSDBacktickFilterWindowsCheckBox gSDBacktickFilterWindowsCheckBoxHandler Checked%BacktickFilterWindows%, &Display windows of the same application (Alt+``)
+    AddTooltip(hSDBacktickFilterWindowsCheckBox, "Display windows of the same application only when Alt+Backtick is pressed.")
+    ; -----------------------------------------------------------------------------
+    Gui, Add, Checkbox, xs+5 y+6 vSDShowStatusBarCheckBox hwndhSDShowStatusBarCheckBox gSDShowStatusBarCheckBoxHandler Checked%ShowStatusBar%, &Show StatusBar
     AddTooltip(hSDShowStatusBarCheckBox, "Show status bar")
     ; -----------------------------------------------------------------------------
     Gui, Add, Checkbox, xs+5 y+6 vSDPromptTerminateAllCheckBox hwndhSDPromptTerminateAllCheckBox gSDPromptTerminateAllCheckBoxHandler Checked%PromptTerminateAll%, &PromptTerminateAll
@@ -302,6 +305,7 @@ ApplySettings:
     ListViewHWBackgroundColor   := tSDListViewHWBackgroundColor
     
     GuiControlGet, PromptTerminateAll, , SDPromptTerminateAllCheckBox
+    GuiControlGet, BacktickFilterWindows, , SDBacktickFilterWindowsCheckBox
     GuiControlGet, ShowStatusBar, , SDShowStatusBarCheckBox
     GuiControlGet, WindowTransparency, , SDWindowTransparencyUpDown
     GuiControlGet, WindowWidthPercentage, , SDWindowWidthPercentageUpDown
@@ -544,6 +548,15 @@ Return
 
 
 ; -----------------------------------------------------------------------------
+; BacktickFilterWindows CheckBox Handler
+; -----------------------------------------------------------------------------
+SDBacktickFilterWindowsCheckBoxHandler:
+    GuiControlGet, tSDBacktickFilterWindows, , SDBacktickFilterWindowsCheckBox
+    CheckSettingsModified()
+Return
+
+
+; -----------------------------------------------------------------------------
 ; ShowStatusBar CheckBox Handler
 ; -----------------------------------------------------------------------------
 SDShowStatusBarCheckBoxHandler:
@@ -618,6 +631,7 @@ IsSettingsModified() {
         or tSDListViewBackgroundColor     != ListViewBackgroundColor	
         or tSDListViewHWFontColor         != ListViewHWFontColor
         or tSDListViewHWBackgroundColor   != ListViewHWBackgroundColor	
+        or tSDBacktickFilterWindows       != BacktickFilterWindows
         or tSDShowStatusBar               != ShowStatusBar
         or tSDPromptTerminateAll          != PromptTerminateAll
         or tSDWindowTransparency          != WindowTransparency
@@ -740,6 +754,7 @@ BackgroundColor=%ListViewBackgroundColorDefault%
 HWFontColor=%ListViewHWFontColorDefault%
 HWBackgroundColor=%ListViewHWBackgroundColorDefault%
 [General]
+BacktickFilterWindows=%BacktickFilterWindowsDefault%
 ShowStatusBar=%ShowStatusBarDefault%
 PromptTerminateAll=%PromptTerminateAllDefault%
 WindowTransparency=%WindowTransparencyDefault%
@@ -798,6 +813,7 @@ IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
         ReadVariable("ListViewBackgroundColor", 	SettingsINIFilePathIn, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
         ReadVariable("ListViewHWFontColor",       	SettingsINIFilePathIn, "ListView",     "HWFontColor",               ListViewHWFontColorDefault)
         ReadVariable("ListViewHWBackgroundColor", 	SettingsINIFilePathIn, "ListView",     "HWBackgroundColor",         ListViewHWBackgroundColorDefault)
+        ReadVariable("BacktickFilterWindows",      	SettingsINIFilePathIn, "General",      "BacktickFilterWindows",     BacktickFilterWindowsDefault)
         ReadVariable("ShowStatusBar",      	        SettingsINIFilePathIn, "General",      "ShowStatusBar",             ShowStatusBarDefault)
         ReadVariable("PromptTerminateAll",      	SettingsINIFilePathIn, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
         ReadVariable("WindowTransparency",      	SettingsINIFilePathIn, "General",      "WindowTransparency",        WindowTransparencyDefault)
@@ -823,6 +839,7 @@ IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
         WriteVariable(ListViewBackgroundColor,      SettingsINIFilePathIn, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
         WriteVariable(ListViewHWFontColor,          SettingsINIFilePathIn, "ListView",     "HWFontColor",               ListViewHWFontColorDefault)
         WriteVariable(ListViewHWBackgroundColor,    SettingsINIFilePathIn, "ListView",     "HWBackgroundColor",         ListViewHWBackgroundColorDefault)
+        WriteVariable(BacktickFilterWindows,        SettingsINIFilePathIn, "General",      "BacktickFilterWindows",     BacktickFilterWindowsDefault)
         WriteVariable(ShowStatusBar,                SettingsINIFilePathIn, "General",      "ShowStatusBar",             ShowStatusBarDefault)
         WriteVariable(PromptTerminateAll,           SettingsINIFilePathIn, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
         WriteVariable(WindowTransparency,           SettingsINIFilePathIn, "General",      "WindowTransparency",        WindowTransparencyDefault)
@@ -990,6 +1007,7 @@ PrintSettings() {
     PrintKV("ListViewBackgroundColor", ListViewBackgroundColor)
     PrintKV("ListViewHWFontColor", ListViewHWFontColor)
     PrintKV("ListViewHWBackgroundColor", ListViewHWBackgroundColor)
+    PrintKV("BacktickFilterWindows", BacktickFilterWindows)
     PrintKV("ShowStatusBar", ShowStatusBar)
     PrintKV("PromptTerminateAll", PromptTerminateAll)
     PrintKV("WindowTransparency", WindowTransparency)
@@ -1015,6 +1033,7 @@ PrintDefaultSettings() {
     PrintKV("ListViewBackgroundColorDefault", ListViewBackgroundColorDefault)
     PrintKV("ListViewHWFontColorDefault", ListViewHWFontColorDefault)
     PrintKV("ListViewHWBackgroundColorDefault", ListViewHWBackgroundColorDefault)
+    PrintKV("BacktickFilterWindowsDefault", BacktickFilterWindowsDefault)
     PrintKV("ShowStatusBarDefault", ShowStatusBarDefault)
     PrintKV("PromptTerminateAllDefault", PromptTerminateAllDefault)
     PrintKV("WindowTransparencyDefault", WindowTransparencyDefault)
@@ -1079,6 +1098,7 @@ StoreSettingsInTempVariables() {
     tSDListViewBackgroundColor      := ListViewBackgroundColor	
     tSDListViewHWFontColor          := ListViewHWFontColor
     tSDListViewHWBackgroundColor    := ListViewHWBackgroundColor
+    tSDBacktickFilterWindows        := BacktickFilterWindows
     tSDShowStatusBar                := ShowStatusBar
     tSDPromptTerminateAll           := PromptTerminateAll
     tSDWindowTransparency           := WindowTransparency
@@ -1105,6 +1125,7 @@ DefineDefaultSettings() {
     ListViewBackgroundColorDefault      := 0x000000
     ListViewHWFontColorDefault          := 0x000000
     ListViewHWBackgroundColorDefault    := 0xFFC90E
+    BacktickFilterWindowsDefault        := true
     ShowStatusBarDefault                := 1
     PromptTerminateAllDefault           := 1
     WindowTransparencyDefault           := 222

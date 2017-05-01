@@ -109,39 +109,63 @@ ReleaseNotesFileName    := "ReleaseNotes.txt"
 ;   GetWindowsCount function will take care of it. Window info will be deleted
 ;   if any hidden window doesn't exist.
 ;
+;
 ; ********* Settings variables *********
-; All Settings are defined/read/write in Settings.Dialog.ahk file
+; All Settings are defined/read/write in SettingsDialog.ahk file
+;
 ;
 ; ********* HotkeysDisabled *********
 ; This variable is used to disable/enable AltTabAlternative application.
 ;
+;
 ; ********* ATACSHotkeysDisabled *********
 ; ATA ContextSensitive hotkeys are ON when the ATA window is visible.
+; Use these keys to hide/unhide, display hidden windows in listview.
+;
+;
+; ********* IsAltBacktick *********
+; Alt+Backtick is used to display the processes of same type.
+; IsAltBacktick is true when Alt+Backtick is pressed.
+;
+;
+; ********* ATACS *********
+; AltTabAlternative ContextSensitive Keys
+;
+;
+; ********* variable *********
+;
 ;
 ; -----------------------------------------------------------------------------
-Global CurSearchString          := ""
-Global NewSearchString          := ""
-Global DisplayListShown         := 0
-Global CtrlBtnDown              := false
-Global NumberBtnDown            := false
-Global NumberBtnValue           := -1
-Global Window_Found_Count       := 0
-Global SelectedRowNumber        := 1
-Global SelectedWinNumber        := 0
-Global LVE_VkCodePrev            =
-Global HotkeysDisabled          := false
-Global ATACSHotkeysDisabled     := false
-Global ActivateWindow           := false
-Global HiddenWindowList         := {}
-Global ShowHiddenWindows        := false
 
-Global SBPartsCount            := 3
-Global SBPartPIDPos            := 3
-Global SBPartActiveWindowPos   := 2
-Global SBPartInfoPos           := 1
+Global CurSearchString              := ""
+Global NewSearchString              := ""
+Global DisplayListShown             := 0
+Global CtrlBtnDown                  := false
+Global NumberBtnDown                := false
+Global NumberBtnValue               := -1
+Global Window_Found_Count           := 0
+Global SelectedRowNumber            := 1
+Global SelectedWinNumber            := 0
+Global SelectedProcName             := ""
+Global LVE_VkCodePrev                =
+Global HotkeysDisabled              := false
+Global AltTabHotkeysDisabled        := false
+Global AltBacktickHotkeysDisabled   := false
+Global ATACSHotkeysDisabled         := false
+Global ActivateWindow               := false
+Global HiddenWindowList             := {}
+Global ShowHiddenWindows            := false
+Global IsAltBacktick                := false
+Global BacktickFilterWindows        := true
+Global BacktickProcName             := ""
 
-Global SBPartPIDWidth          := 108
-Global SBPartActiveWindowWidth := 60
+Global SBPartsCount                 := 3
+Global SBPartPIDPos                 := 3
+Global SBPartActiveWindowPos        := 2
+Global SBPartInfoPos                := 1
+
+Global SBPartPIDWidth               := 108
+Global SBPartActiveWindowWidth      := 60
 
 
 ; -----------------------------------------------------------------------------
@@ -157,7 +181,6 @@ ListviewResizeIcons := 0     ; Resize icons to fit listview area
 ; -----------------------------------------------------------------------------
 IniFileData("Read")
 PrintSettings()
-
 
 ; Position
 GuiX = Center
@@ -178,6 +201,8 @@ Col_1 = Auto    ; Icon Column
 Col_2 = 0       ; Row Number
 ; col 3 is autosized based on other column sizes
 Col_4 = Auto    ; Process Name
+Col_4_Width_Min := 143
+Col_4_Width_Max := 200
 
 ColumnTitleList = #| |Window Title|Process Name
 StringSplit, ColumnTitle, ColumnTitleList,| ; Create list of listview header titles
@@ -620,6 +645,8 @@ InitiateHotkeys:
     TabHotKey                 = Tab
     ShiftTabHotkey            = +Tab
     EscHotKey                 = Esc
+    BacktickHotKey            = ``
+    ShiftBacktickHotKey       = +``
     HelpHotKey                = F1
     SettingsHotKey            = F2
     HideWindowHotkey          = +NumpadSub
@@ -629,6 +656,8 @@ InitiateHotkeys:
     PrintKV("AltHotkey", AltHotkey)
     PrintKV("TabHotkey", TabHotkey)
     PrintKV("ShiftTabHotkey", ShiftTabHotkey)
+    PrintKV("BacktickHotKey", BacktickHotKey)
+    PrintKV("ShiftBacktickHotKey", ShiftBacktickHotKey)
     PrintKV("EscHotKey", EscHotKey)
     PrintKV("HelpHotKey", HelpHotKey)
     PrintKV("SettingsHotKey", SettingsHotKey)
@@ -644,6 +673,9 @@ Return
 
 ; -----------------------------------------------------------------------------
 ; Toggle Hotkeys
+; This function toggles the below hotkeys
+;  * Alt+Tab / Alt+Shift+Tab
+;  * Alt+Backtick / Alt+Shift+Backtick
 ; -----------------------------------------------------------------------------
 ToggleHotkeys(state)    ; (state = "On" or "Off")
 {
@@ -661,13 +693,99 @@ ToggleHotkeys(state)    ; (state = "On" or "Off")
         return
     }
 
+    ; Alt+Tab
+    ;~ Hotkey, %AltHotkey%%TabHotkey%, AltTabAlternative, %state% UseErrorLevel
+    ;~ Hotkey, %AltHotkey%%ShiftTabHotkey%, AltShiftTabAlternative, %state% UseErrorLevel
+    ToggleAltTabHotkeys(state)
+    
+    ; Alt+Backtick
+    ;~ Hotkey, %AltHotkey%%BacktickHotkey%, AltBacktickAlternative, %state% UseErrorLevel
+    ;~ Hotkey, %AltHotkey%%ShiftBacktickHotkey%, AltShiftBacktickAlternative, %state% UseErrorLevel
+    ToggleAltBacktickHotkeys(state)
+}
+
+
+; -----------------------------------------------------------------------------
+; Toggle Alt+Tab Hotkeys
+; Disable Alt+Tab hotkeys when Alt+Backtick is pressed.
+; -----------------------------------------------------------------------------
+ToggleAltTabHotkeys(state)    ; (state = "On" or "Off")
+{
+    Global
+    PrintSub("ToggleAltTabHotkeys")
+    PrintKV("ToggleAltTabHotkeys: state", state)
+    if (state = "on") {
+        ;~ Print("state = on")
+        AltTabHotkeysDisabled := false
+    } else if (state = "off") {
+        ;~ Print("state = off")
+        AltTabHotkeysDisabled := true
+    } else {
+        Print("Unknown state")
+        return
+    }
+
+    ; Alt+Tab
     Hotkey, %AltHotkey%%TabHotkey%, AltTabAlternative, %state% UseErrorLevel
     Hotkey, %AltHotkey%%ShiftTabHotkey%, AltShiftTabAlternative, %state% UseErrorLevel
 }
 
 
 ; -----------------------------------------------------------------------------
+; Toggle Alt+Tab Hotkeys
+; Disable Alt+Tab hotkeys when Alt+Backtick is pressed.
+; -----------------------------------------------------------------------------
+ToggleAltBacktickHotkeys(state)    ; (state = "On" or "Off")
+{
+    Global
+    PrintSub("ToggleAltBacktickHotkeys")
+    PrintKV("ToggleAltBacktickHotkeys: state", state)
+    if (state = "on") {
+        ;~ Print("state = on")
+        AltBacktickHotkeysDisabled := false
+    } else if (state = "off") {
+        ;~ Print("state = off")
+        AltBacktickHotkeysDisabled := true
+    } else {
+        Print("Unknown state")
+        return
+    }
+    
+    ; Alt+Backtick
+    Hotkey, %AltHotkey%%BacktickHotkey%, AltBacktickAlternative, %state% UseErrorLevel
+    Hotkey, %AltHotkey%%ShiftBacktickHotkey%, AltShiftBacktickAlternative, %state% UseErrorLevel
+}
+
+
+; -----------------------------------------------------------------------------
+; Toggle Alt+Tab Hotkeys
+; Redirect Alt+Tab hotkeys when Alt+Backtick is pressed.
+; -----------------------------------------------------------------------------
+ToggleAltTabRedirectedHotkeys(state)    ; (state = "On" or "Off")
+{
+    Global
+    PrintSub("ToggleAltTabHotkeys")
+    PrintKV("ToggleAltTabHotkeys: state", state)
+    if (state = "on") {
+        ;~ Print("state = on")
+        AltTabHotkeysDisabled := false
+    } else if (state = "off") {
+        ;~ Print("state = off")
+        AltTabHotkeysDisabled := true
+    } else {
+        Print("Unknown state")
+        return
+    }
+
+    ; Alt+Tab
+    Hotkey, %AltHotkey%%TabHotkey%, AltBacktickAlternative, %state% UseErrorLevel
+    Hotkey, %AltHotkey%%ShiftTabHotkey%, AltShiftBacktickAlternative, %state% UseErrorLevel
+}
+
+
+; -----------------------------------------------------------------------------
 ; Toggle AltTabAlternative ContextSensitive Hotkeys
+; Use these keys to hide/unhide, display hidden windows in listview.
 ; -----------------------------------------------------------------------------
 ToggleATACSHotkeys(state)    ; (state = "On" or "Off")
 {
@@ -739,6 +857,26 @@ Return
 
 
 ; -----------------------------------------------------------------------------
+; AltBacktickAlternative Gosub
+; This hotkey displays the actual window
+; -----------------------------------------------------------------------------
+AltBacktickAlternative:
+    PrintSub("AltBacktickAlternative")
+    AltBacktickCommonFunction(1)
+Return
+    
+
+; -----------------------------------------------------------------------------
+; AltShiftTabAlternative Gosub
+; This hotkey displays the actual window
+; -----------------------------------------------------------------------------
+AltShiftBacktickAlternative:
+    PrintSub("AltShiftBacktickAlternative")
+    AltBacktickCommonFunction(-1)
+Return
+
+
+; -----------------------------------------------------------------------------
 ; This hotkey displays the actual window
 ; -----------------------------------------------------------------------------
 AltTabCommonFunction(direction)
@@ -747,6 +885,9 @@ AltTabCommonFunction(direction)
     Global Window_Found_Count
     Global LVE_VkCodePrev
     Global SBPartPIDPos
+    Global IsAltBacktick
+    
+    IsAltBacktick := false
     
     PrintSub("AltTabCommonFunction")
     PrintKV("direction", direction)
@@ -762,6 +903,7 @@ AltTabCommonFunction(direction)
         ;~ Gosub, HiddenWindowsFileOpen
         ToggleAltEscHotkey("On")
         ToggleATACSHotkeys("On")
+        ToggleAltBacktickHotkeys("Off")
     }
 
     SB_SetText("")
@@ -784,6 +926,80 @@ AltTabCommonFunction(direction)
         SelectedRowNumber := Window_Found_Count
     }
     PrintKV("[AltTabCommonFunction] SelectedRowNumber", SelectedRowNumber)
+    ;~ LV_Modify(SelectedRowNumber, "Select Vis Focus") ; Get selected row and ensure selection & focus is visible
+    ListViewSelectRow(SelectedRowNumber)
+
+    ; Display the selected row number and its WindowID
+    ;~ PrintSelectedRowInfo()
+
+    Return
+}
+
+
+; -----------------------------------------------------------------------------
+; This hotkey displays the actual window
+; Disable the Alt+Tab hotkeys when the Alt+Tab key is pressed and enable them
+;  when the Alt key is released.
+; -----------------------------------------------------------------------------
+AltBacktickCommonFunction(direction)
+{
+    Global DisplayListShown
+    Global Window_Found_Count
+    Global LVE_VkCodePrev
+    Global SBPartPIDPos
+    Global IsAltBacktick
+    Global SelectedProcName
+
+    IsAltBacktick := true
+
+    PrintSub("AltBacktickCommonFunction")
+    PrintKV("direction", direction)
+    PrintKV("DisplayListShown", DisplayListShown)
+    
+    if (DisplayListShown = 0) {
+        Print("--- Test ---")
+        Gosub, InitializeDefaults
+        Gosub, CreateWindow
+        Gosub, DisplayList
+        Gosub, GuiResizeAndPosition
+        Gosub, ShowWindow
+        ;~ Gosub, HiddenWindowsFileOpen
+        ToggleAltEscHotkey("On")
+        ToggleATACSHotkeys("On")
+        
+        ; Disable the Alt+Tab hotkeys
+        ;~ ToggleAltTabHotkeys("Off")
+        ToggleAltTabRedirectedHotkeys("On")
+    }
+
+    SB_SetText("")
+    SB_SetText("Alt+Backtick, Selected ProcessName: " . SelectedProcName)
+    
+    ; Check for Alt Up 
+    SetTimer, CheckAltHotkeyUp, 40
+    
+    ; Reset LVE_VkCodePrev to empty
+    ; When user switching between windows using Alt+Shift+Tab and press Del,
+    ; then should not treat this as Shift+Del (forcefully terminate process)
+    ; So, need to reset LVE_VkCodePrev to empty always while Alt+Shift+Tab
+    LVE_VkCodePrev =
+    
+    SelectedRowNumber := LV_GetNext(0, "F")
+    ; SelectedRowNumber += direction
+    if (direction > 0) {
+        SelectedRowNumber := GetNextRowInfoOfSameProcess()
+    }
+    else {
+        SelectedRowNumber := GetPrevRowInfoOfSameProcess()
+    }
+    
+    if (SelectedRowNumber > Window_Found_Count) {
+        SelectedRowNumber = 1
+    }
+    if (SelectedRowNumber < 1) {
+        SelectedRowNumber := Window_Found_Count
+    }
+    PrintKV("[AltBacktickCommonFunction] SelectedRowNumber", SelectedRowNumber)
     ;~ LV_Modify(SelectedRowNumber, "Select Vis Focus") ; Get selected row and ensure selection & focus is visible
     ListViewSelectRow(SelectedRowNumber)
 
@@ -982,6 +1198,8 @@ InitializeDefaults:
     ActivateWindow      := false
     AltEscPressed       := 0
     ShowHiddenWindows   := false
+    BacktickProcName    := ""
+
     ; -----------------------------------------------------------------------------
     ; Need to compute the WindowWidth & WindowHeightMax to display
     ; the AltTabAlternative window with changes without restarting
@@ -1071,7 +1289,7 @@ Return
 ; search string
 ; -----------------------------------------------------------------------------
 DisplayList:
-    PrintSub("DisplayList")
+    PrintLabel()
     PrintKV("[DisplayList] SelectedRowNumber", SelectedRowNumber)
     LV_ColorChange() ; Clear all highlighting
     GuiControl, -Redraw, ListView1
@@ -1132,6 +1350,21 @@ DisplayList:
             if (isAltTabWindow) {
                 WinGet, procPath, ProcessPath, ahk_id %windowID%
                 WinGet, procName, ProcessName, ahk_id %windowID%
+                PrintKV2("[DisplayList] Window_Found_Count", Window_Found_Count, "procName", procName)
+
+                ; If Alt+Backtick is pressed and BacktickFilterWindows is true, then filter
+                ; only the windows of the same application.
+                if (IsAltBacktick && BacktickFilterWindows) {
+                    if (Window_Found_Count == 0) {
+                        BacktickProcName := procName
+                        PrintKV("[DisplayList] BacktickProcName", BacktickProcName)
+                    }
+                    else {
+                        if (BacktickProcName != procName) {
+                            continue
+                        }
+                    }
+                }
                 
                 ;~ FileAppend, A_Index = [%A_Index%] title = [%title%]`, processName = [%procName%]`n, *
                 ;~ Print("CurSearchString = " . CurSearchString)
@@ -1198,6 +1431,8 @@ Return
 
 ; -----------------------------------------------------------------------------
 ; ListView event handler
+; Special cases:
+;   Tab: Need to handle Tab pressed key (when Alt+Backtick is pressed)
 ; -----------------------------------------------------------------------------
 ListViewEvent:
     Critical, 50
@@ -1292,11 +1527,27 @@ ListViewEvent:
             ShowSettingsDialog()
             Return
         }
+        else if (vkCode = GetKeyVK("Tab")) {
+            if (IsShiftKeyDown) {
+                Gosub, AltBacktickAlternative
+            }
+            else {
+                Gosub, AltShiftBacktickAlternative
+            }
+            SBUpdateInfo("KeyPress: " . key)
+            LVE_VkCodePrev := vkCode
+            Return
+        }
         ; -----------------------------------------------------------------------------
         ; Handle NumpadDown - 40
         ; -----------------------------------------------------------------------------
         else if (vkCode = GetKeyVK("NumpadDown")) {
-            Gosub, AltTabAlternative
+            if (IsAltBacktick) {
+                Gosub, AltBacktickAlternative
+            }
+            else {
+                Gosub, AltTabAlternative
+            }
             SBUpdateInfo("KeyPress: " . key)
             LVE_VkCodePrev := vkCode
             Return
@@ -1305,7 +1556,12 @@ ListViewEvent:
         ; NumpadUp - 38
         ; -----------------------------------------------------------------------------
         else if (vkCode = GetKeyVK("NumpadUp")) {
-            Gosub, AltShiftTabAlternative
+            if (IsAltBacktick) {
+                Gosub, AltShiftBacktickAlternative
+            }
+            else {
+                Gosub, AltShiftTabAlternative
+            }
             SBUpdateInfo("KeyPress: " . key)
             LVE_VkCodePrev := vkCode
             Return
@@ -1446,6 +1702,34 @@ ListViewEvent:
             Window_Found_Count := 0
             Gosub, EnableIncrementalSearch
         }
+        else if (vkCode = GetKeyVK("``")) {  ; Backtick (`) - 192/vkc0
+            Print("[LVEvent:Backtick] Backtick pressed")
+            Print("[LVEvent:Backtick] SelectedRowNumber = " . SelectedRowNumber)
+            windowID := Window%SelectedRowNumber%
+            ownerID := WindowParent%SelectedRowNumber%
+            exeName := Exe_Name%SelectedRowNumber%
+            procID := PID%SelectedRowNumber%
+            Print("   windowID = " . windowID)
+            Print("    ownerID = " . ownerID)
+            Print("windowTitle = " . WindowTitle%SelectedRowNumber%)
+            Print("    exeName = " . exeName)
+            Print("     procID = " . procID)
+            
+            ; Get next/prev row number of process exeName
+            if (IsShiftKeyDown) {
+                SelectedRowNumber := GetPrevRowInfoOfSameProcess()
+            }
+            else {
+                SelectedRowNumber := GetNextRowInfoOfSameProcess()
+            }
+            
+            ;~ LV_Modify(SelectedRowNumber, "Select Vis Focus")
+            ListViewSelectRow(SelectedRowNumber)
+            SBUpdateInfo("KeyPress: " . "Backtick")
+            LVE_VkCodePrev := vkCode
+            Return
+            
+        }
         
         IsCtrlKeyDown := GetKeyState("Ctrl", "P") or GetKeyState("Ctrl")
         PrintKV("IsCtrlKeyDown", IsCtrlKeyDown)
@@ -1526,6 +1810,10 @@ IsSymbol(x) {
 
 ; -----------------------------------------------------------------------------
 ; AltTabAlternative Destory
+; Disable all the hotkeys listed below that are enabled when Alt+Tab /
+;  Alt+Shift+Tab is pressed.
+;  * Alt+Esc Key
+;  * ContextSensitive Keys (to hide/unhide windows)
 ; -----------------------------------------------------------------------------
 AltTabAlternativeDestroy:
     PrintSub("AltTabAlternativeDestroy Begin")
@@ -1534,6 +1822,10 @@ AltTabAlternativeDestroy:
     Gosub, DisableTimers
     ToggleAltEscHotkey("Off")
     ToggleATACSHotkeys("Off")
+    
+    ; Toggle on all the hotkeys / invoke initialize hotkeys label.
+    ToggleAltTabHotkeys("On")
+    ToggleAltBacktickHotkeys("On")
     
     ; Save the hidden windows information into file
     Gosub, HiddenWindowsFileSave
@@ -1611,14 +1903,16 @@ WindowStoreAttributes(index, windowID, ownerID)
         }
     }
 
-    ;~ Print("[WindowStoreAttributes] -------------------------------------------")
-    ;~ Print("[WindowStoreAttributes]       Index = " . index)
-    ;~ Print("[WindowStoreAttributes]    WindowID = " . windowID)
-    ;~ Print("[WindowStoreAttributes]     OwnerID = " . ownerID)
-    ;~ Print("[WindowStoreAttributes] WindowTitle = " . windowTitle)
-    ;~ Print("[WindowStoreAttributes]    ProcName = " . procName)
-    ;~ Print("[WindowStoreAttributes]      ProcID = " . procID)
-    ;~ Print("[WindowStoreAttributes] -------------------------------------------")
+    if (!true) {
+        Print("[WindowStoreAttributes] -------------------------------------------")
+        Print("[WindowStoreAttributes]       Index = " . index)
+        Print("[WindowStoreAttributes]    WindowID = " . windowID)
+        Print("[WindowStoreAttributes]     OwnerID = " . ownerID)
+        Print("[WindowStoreAttributes] WindowTitle = " . windowTitle)
+        Print("[WindowStoreAttributes]    ProcName = " . procName)
+        Print("[WindowStoreAttributes]      ProcID = " . procID)
+        Print("[WindowStoreAttributes] -------------------------------------------")
+    }
 }
 
 
@@ -1632,8 +1926,11 @@ GetSelectedRowInfo()
     
     SelectedRowNumber := LV_GetNext(0, "F")
     Local WindowID := Window%SelectedRowNumber%
+    SelectedProcName := Exe_Name%SelectedRowNumber%
+    
     PrintKV("[GetSelectedRowInfo] SelectedRowNumber", SelectedRowNumber)
     PrintKV("[GetSelectedRowInfo]          WindowID", WindowID)
+    PrintKV("[GetSelectedRowInfo]  SelectedProcName", SelectedProcName)
 
     ; Get the row's 2nd column's text for real order number (hidden column).
     LV_GetText(RowText, SelectedWinNumber, 2)
@@ -1906,6 +2203,7 @@ GetWindowIcon(windowID, UseLargeIconsCurrent) ; (window id, whether to get large
 ; Resize and position
 ; -----------------------------------------------------------------------------
 GuiResizeAndPosition:
+    PrintSub("GuiResizeAndPosition")
     DetectHiddenWindows, On ; retrieving column widths to enable calculation of col 3 width
     Gui, +LastFound
     
@@ -1917,14 +2215,14 @@ GuiResizeAndPosition:
         LV_ModifyCol(4, Col_4) ; exe
         SendMessage, 0x1000+29, 3, 0,, ahk_id %ListView1Hwnd% ; LVM_GETCOLUMNWIDTH is 0x1000+29
         Width_Column_4 := ErrorLevel
-        If Width_Column_4 > %ExeWidthMax%
-        LV_ModifyCol(4, ExeWidthMax) ; resize title column
+        Width_Column_4 := Width_Column_4 < Col_4_Width_Min ? Col_4_Width_Min : (Width_Column_4 > Col_4_Width_Max ? Col_4_Width_Max : Width_Column_4)
+        LV_ModifyCol(4, Width_Column_4) ; resize title column
 
         Loop, 4
         {
             SendMessage, 0x1000+29, A_Index - 1, 0,, ahk_id %ListView1Hwnd% ; LVM_GETCOLUMNWIDTH is 0x1000+29
             Width_Column_%A_Index% := ErrorLevel
-            ;~ Print("Width_Column_" . A_Index . " = " . Width_Column_%A_Index%)
+            Print("Width_Column_" . A_Index . " = " . Width_Column_%A_Index%)
         }
 
         Col_3_w := WindowWidth - Width_Column_1 - Width_Column_2 - Width_Column_4 - 4 ; total width of columns - 4 for border
@@ -2046,8 +2344,11 @@ LV_SetSI(hList, iItem, iSubItem, iImage) {
 ; -----------------------------------------------------------------------------
 GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
     Global WS_EX_APPWINDOW, WS_EX_TOOLWINDOW, GW_OWNER
+    Global BacktickFilterWindows
+    Global BacktickProcName
     windowList =
     windowFoundCount := 0
+    CurrentProcName := ""
     
     DetectHiddenWindows, Off ; makes DllCall("IsWindowVisible") unnecessary
     
@@ -2098,6 +2399,20 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
             if (isAltTabWindow)
             {
                 WinGet, procName, ProcessName, ahk_id %windowID%
+                
+                ; If Alt+Backtick is pressed and BacktickFilterWindows is true, then filter
+                ; only the windows of the same application.
+                if (IsAltBacktick && BacktickFilterWindows) {
+                    if (windowFoundCount == 0) {
+                        CurrentProcName := procName
+                        ;~ PrintKV("[GetWindowsCount] CurrentProcName", CurrentProcName)
+                    }
+                    else {
+                        if (BacktickProcName != procName) {
+                            continue
+                        }
+                    }
+                }
                 
                 ;~ FileAppend, A_Index = [%A_Index%] title = [%title%]`, processName = [%procName%]`n, *
                 ;~ Print("SearchString = " . SearchString)
@@ -2554,6 +2869,62 @@ SBUpdateActiveWindowPos() {
 ; -----------------------------------------------------------------------------
 MainDoNothingHandler:
 Return
+
+
+; -----------------------------------------------------------------------------
+; GetNextRowInfoOfSameProcess
+; This method returns the row number of the
+; -----------------------------------------------------------------------------
+GetNextRowInfoOfSameProcess() {
+    Global
+    SelectedProcName := Exe_Name%SelectedRowNumber%
+    Local ind := 0
+    PrintSub("GetNextRowInfoOfSameProcess")
+    
+    Loop, %Window_Found_Count% {
+        ind := SelectedRowNumber + A_Index
+        PrintKV("[GetNextRowInfoOfSameProcess] ind", ind)
+        if (ind > Window_Found_Count) {
+            ind := Mod(ind, Window_Found_Count)
+        }
+        
+        exeName := Exe_Name%ind%
+        ; Do case insensitive comparision using '=' (single equal)
+        if (SelectedProcName = exeName) {
+            ;~ Print("[GetNextRowInfoOfSameProcess] ExeName[" . ind . "] = " . exeName)
+            return ind
+        }
+    }
+    
+    return SelectedRowNumber
+}
+
+
+; -----------------------------------------------------------------------------
+; GetPrevRowInfoOfSameProcess
+; This method returns the row number of the
+; -----------------------------------------------------------------------------
+GetPrevRowInfoOfSameProcess() {
+    Global
+    SelectedProcName := Exe_Name%SelectedRowNumber%
+    Local ind := 0
+    
+    Loop, %Window_Found_Count% {
+        ind := SelectedRowNumber - A_Index
+        if (ind < 1) {
+            ind := ind + Window_Found_Count
+        }
+        
+        exeName := Exe_Name%ind%
+        ; Do case insensitive comparision using '=' (single equal)
+        if (SelectedProcName = exeName) {
+            ;~ Print("[GetNextRowInfoOfSameProcess] ExeName[" . ind . "] = " . exeName)
+            return ind
+        }
+    }
+    
+    return SelectedRowNumber
+}
 
 
 ; -----------------------------------------------------------------------------

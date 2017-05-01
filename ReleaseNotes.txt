@@ -8,6 +8,13 @@ Known Issues
 - Available @ https://sourceforge.net/p/alttabalternative/tickets/
 
 
+2017.1 new features and bug fixes
+---------------------------------
++ Introduced new hotkey Alt+Backtick, Alt+Shift+Backtick to switch
+  between windows of the same application. (Backtick: `, the key above Tab).
++ Backtick/Shift+Backtick moves the selection to the next/previous window of
+  the same application in Alt+Tab/Alt+Shift+Tab window list.
+
 2016.3 new features and bug fixes
 ---------------------------------
 + Hide/un-hide windows using keyboard shortcuts only.
