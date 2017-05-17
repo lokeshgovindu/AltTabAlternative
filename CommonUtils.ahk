@@ -148,8 +148,8 @@ JavaHomeGet() {
 
 
 MouseIsOver(WinTitle) {
- MouseGetPos,,, Win
- return WinExist(WinTitle . " ahk_id " . Win)
+    MouseGetPos,,, Win
+    return WinExist(WinTitle . " ahk_id " . Win)
 }
 
 

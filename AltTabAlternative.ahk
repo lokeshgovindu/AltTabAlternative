@@ -15,7 +15,7 @@ o-----------------------------------------------------------------------------o
 #InstallKeybdHook
 
 #Include %A_ScriptDir%\VersionInfo.ahk
-
+#Include %A_ScriptDir%\ATATooltips.ahk
 
 SetWorkingDir, %A_ScriptDir%
 
@@ -32,9 +32,10 @@ WM_NOTIFY  := 0x004E
 ; Product Information 
 ; -----------------------------------------------------------------------------
 
-ProductPage 	        := "http://alttabalternative.sourceforge.net/"
+ProductPage 	        := "https://alttabalternative.sourceforge.io/"
 AuthorName 		        := "Lokesh Govindu"
 AuthorPage 		        := "http://lokeshgovindu.blogspot.in/"
+AuthorEMail             := "lokeshgovindu@gmail.com"
 ProductLatestURL        := "https://sourceforge.net/projects/alttabalternative/files/latest/download"
 UpdateFileURL           := "https://sourceforge.net/projects/alttabalternative/files/version.txt/download"
 AboutDialogHtml =
@@ -50,7 +51,9 @@ software.</span></b><span style='font-family:"Calibri",sans-serif;mso-fareast-fo
 style='color:#002060'> is a small application created in <a
 href="https://autohotkey.com/"><span class=SpellE><span style='color:#002060'>AutoHotkey</span></span></a>,
 is an alternative for windows native task switcher (<span class=SpellE>Alt+Tab</span>
-/ <span class=SpellE>Alt+Shift+Tab</span>).</span><br>
+/ <span class=SpellE>Alt+Shift+Tab</span>).
+It also supports Alt+Backtick / Alt+Shift+Backtick to switch between the windows of the same application.</span>
+<br>
 <br>
 </span>
 <span class=SpellE><b style='mso-bidi-font-weight:normal'><span
@@ -60,7 +63,8 @@ style='mso-bidi-font-weight:normal'><span style='font-size:11.0pt;mso-bidi-font-
 12.0pt;font-family:"Calibri",sans-serif;mso-fareast-font-family:"Times New Roman";
 color:#002060'><br>
 <span class=SpellE>FullVersion %ATAPRODUCTFULLVERSION%</span><br>
-%ATACOPYRIGHT%<o:p></o:p></span></b>
+%ATACOPYRIGHT%<o:p></o:p><br><a href="mailto:%AuthorEMail%?Subject=AltTabAlternative">
+%AuthorEMail%</a></span></b>
 <hr>
 <b style='mso-bidi-font-weight:normal'>
 <span style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;
@@ -137,7 +141,10 @@ ReleaseNotesFileName    := "ReleaseNotes.txt"
 ;
 ; -----------------------------------------------------------------------------
 
+; Current search string
 Global CurSearchString              := ""
+
+; New search string
 Global NewSearchString              := ""
 Global DisplayListShown             := 0
 Global CtrlBtnDown                  := false
@@ -158,6 +165,8 @@ Global ShowHiddenWindows            := false
 Global IsAltBacktick                := false
 Global BacktickFilterWindows        := true
 Global BacktickProcName             := ""
+Global ProcessDictList              := ""
+Global ProcessDictListIndex         := -1
 
 Global SBPartsCount                 := 3
 Global SBPartPIDPos                 := 3
@@ -181,6 +190,13 @@ ListviewResizeIcons := 0     ; Resize icons to fit listview area
 ; -----------------------------------------------------------------------------
 IniFileData("Read")
 PrintSettings()
+
+;~ Global SimilarProcessGroupsStr := "notepad++.exe/notepad.exe|chrome.exe/iexplore.exe|explorer.exe/xplorer2_lite.exe/xplorer2.exe/xplorer2_64.exe"
+;~ Global ProcessDictList := GetProcessDictList(SimilarProcessGroupsStr)
+;~ Global ProcessDictListIndex := -1
+
+;~ PrintProcessDictList("ProcessDictList", ProcessDictList)
+
 
 ; Position
 GuiX = Center
@@ -277,13 +293,17 @@ IfNotExist, %HiddenWindowsFilePath%
 
 ; -----------------------------------------------------------------------------
 ; Check if the application is marked "Run At Startup"
+; Always Run At Startup when the application starts.
 ; -----------------------------------------------------------------------------
 IfExist, %A_Startup%/%ProgramName%.lnk
 {
 	FileDelete, %A_Startup%/%ProgramName%.lnk
-	FileCreateShortcut, % H_Compiled ? A_AhkPath : A_ScriptFullPath, %A_Startup%/%ProgramName%.lnk
-	Menu, Tray, Check, Run At Startup
+	;~ FileCreateShortcut, % H_Compiled ? A_AhkPath : A_ScriptFullPath, %A_Startup%/%ProgramName%.lnk
+	;~ Menu, Tray, Check, Run At Startup
 }
+
+FileCreateShortcut, % H_Compiled ? A_AhkPath : A_ScriptFullPath, %A_Startup%/%ProgramName%.lnk
+Menu, Tray, Check, Run At Startup
 
 ; -----------------------------------------------------------------------------
 ; Run CheckForUpdates
@@ -1199,6 +1219,7 @@ InitializeDefaults:
     AltEscPressed       := 0
     ShowHiddenWindows   := false
     BacktickProcName    := ""
+    ProcessDictListIndex := -1
 
     ; -----------------------------------------------------------------------------
     ; Need to compute the WindowWidth & WindowHeightMax to display
@@ -1217,7 +1238,7 @@ Return
 ; -----------------------------------------------------------------------------
 CreateWindow:
     PrintSub("CreateWindow")
-    Gui, 1: +AlwaysOnTop +ToolWindow -Caption +HwndMainWindowHwnd +Border
+    Gui, 1: +AlwaysOnTop +ToolWindow -Caption +HwndMainWindowHwnd +Border -SysMenu
     Gui, 1: Margin, 0, 0
 
     Gui, 1: Font, s%SearchStringFontSize% c%SearchStringFontColor% %SearchStringFontStyle%, %SearchStringFontName%
@@ -1355,12 +1376,23 @@ DisplayList:
                 ; If Alt+Backtick is pressed and BacktickFilterWindows is true, then filter
                 ; only the windows of the same application.
                 if (IsAltBacktick && BacktickFilterWindows) {
-                    if (Window_Found_Count == 0) {
+                    if (DisplayListShown == 0 && Window_Found_Count == 0) {
                         BacktickProcName := procName
+                        ProcessDictListIndex := GetProcessDictListIndex(ProcessDictList, BacktickProcName)
                         PrintKV("[DisplayList] BacktickProcName", BacktickProcName)
+                        PrintKV("[DisplayList] ProcessDictListIndex", ProcessDictListIndex)
                     }
                     else {
-                        if (BacktickProcName != procName) {
+                        ;~ if (BacktickProcName != procName) {
+                            ;~ continue
+                        ;~ }
+                        
+                        if (ProcessDictListIndex != -1) {
+                            if (not ProcessDictList[ProcessDictListIndex].HasKey(procName)) {
+                                continue
+                            }
+                        }
+                        else {
                             continue
                         }
                     }
@@ -1714,6 +1746,8 @@ ListViewEvent:
             Print("windowTitle = " . WindowTitle%SelectedRowNumber%)
             Print("    exeName = " . exeName)
             Print("     procID = " . procID)
+            
+            ProcessDictListIndex := GetProcessDictListIndex(ProcessDictList, exeName)
             
             ; Get next/prev row number of process exeName
             if (IsShiftKeyDown) {
@@ -2346,9 +2380,12 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
     Global WS_EX_APPWINDOW, WS_EX_TOOLWINDOW, GW_OWNER
     Global BacktickFilterWindows
     Global BacktickProcName
+    Global ProcessDictListIndex
+    Global ProcessDictList
     windowList =
     windowFoundCount := 0
-    CurrentProcName := ""
+    
+    ;~ PrintKV2("[GetWindowsCount] ProcessDictListIndex", ProcessDictListIndex, "BacktickProcName", BacktickProcName)
     
     DetectHiddenWindows, Off ; makes DllCall("IsWindowVisible") unnecessary
     
@@ -2399,18 +2436,19 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
             if (isAltTabWindow)
             {
                 WinGet, procName, ProcessName, ahk_id %windowID%
+                ;~ bIsValidProc := (procName = BacktickProcName)
+                    ;~ || (ProcessDictListIndex != -1 && ProcessDictList[ProcessDictListIndex].HasKey(procName))
+                ;~ PrintKV2("[GetWindowsCount] procName", procName, "bIsValidProc", bIsValidProc)
                 
                 ; If Alt+Backtick is pressed and BacktickFilterWindows is true, then filter
-                ; only the windows of the same application.
+                ;   only the windows of the same application.
+                ; Use the BacktickProcName that is used to filter the windows when
+                ;   Alt+Backtick is pressed.
                 if (IsAltBacktick && BacktickFilterWindows) {
-                    if (windowFoundCount == 0) {
-                        CurrentProcName := procName
-                        ;~ PrintKV("[GetWindowsCount] CurrentProcName", CurrentProcName)
-                    }
-                    else {
-                        if (BacktickProcName != procName) {
-                            continue
-                        }
+                    bIsValidProc := (procName = BacktickProcName)
+                        || (ProcessDictListIndex != -1 && ProcessDictList[ProcessDictListIndex].HasKey(procName))
+                    if (not bIsValidProc) {
+                        continue
                     }
                 }
                 
@@ -2457,6 +2495,7 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
         DetectHiddenWindows, Off
     }
 
+    ;~ PrintKV("[GetWindowsCount] windowFoundCount", windowFoundCount)
     return windowFoundCount
 }
 
@@ -2877,22 +2916,33 @@ Return
 ; -----------------------------------------------------------------------------
 GetNextRowInfoOfSameProcess() {
     Global
-    SelectedProcName := Exe_Name%SelectedRowNumber%
-    Local ind := 0
+    
     PrintSub("GetNextRowInfoOfSameProcess")
+    ; If there is only one window, no need to proceed further
+    if (Window_Found_Count == 1) {
+        return SelectedRowNumber
+    }
+    
+    SelectedProcName := Exe_Name%SelectedRowNumber%
+    ind := 0
+    ;~ PrintKV2("[GetNextRowInfoOfSameProcess] SelectedProcName", SelectedProcName, "ProcessDictListIndex", ProcessDictListIndex)
+    ;~ MsgBox, 0, Title, Text
     
     Loop, %Window_Found_Count% {
         ind := SelectedRowNumber + A_Index
-        PrintKV("[GetNextRowInfoOfSameProcess] ind", ind)
+        ;~ PrintKV2("[GetNextRowInfoOfSameProcess] ind", ind, "ExeName", ind)
+        
         if (ind > Window_Found_Count) {
             ind := Mod(ind, Window_Found_Count)
         }
-        
         exeName := Exe_Name%ind%
+        PrintKV2("[GetNextRowInfoOfSameProcess] ind", ind, "ExeName", exeName)
+        
         ; Do case insensitive comparision using '=' (single equal)
-        if (SelectedProcName = exeName) {
-            ;~ Print("[GetNextRowInfoOfSameProcess] ExeName[" . ind . "] = " . exeName)
-            return ind
+        if (SelectedProcName = exeName
+            || (ProcessDictListIndex != -1 && ProcessDictList[ProcessDictListIndex].HasKey(exeName))) {
+            SelectedRowNumber := ind
+            break
         }
     }
     
@@ -2906,6 +2956,13 @@ GetNextRowInfoOfSameProcess() {
 ; -----------------------------------------------------------------------------
 GetPrevRowInfoOfSameProcess() {
     Global
+
+    PrintSub("GetPrevRowInfoOfSameProcess")
+    ; If there is only one window, no need to proceed further
+    if (Window_Found_Count == 1) {
+        return SelectedRowNumber
+    }
+    
     SelectedProcName := Exe_Name%SelectedRowNumber%
     Local ind := 0
     
@@ -2917,9 +2974,11 @@ GetPrevRowInfoOfSameProcess() {
         
         exeName := Exe_Name%ind%
         ; Do case insensitive comparision using '=' (single equal)
-        if (SelectedProcName = exeName) {
+        if (SelectedProcName = exeName
+            || (ProcessDictListIndex != -1 && ProcessDictList[ProcessDictListIndex].HasKey(exeName))) {
             ;~ Print("[GetNextRowInfoOfSameProcess] ExeName[" . ind . "] = " . exeName)
-            return ind
+            SelectedRowNumber := ind
+            break
         }
     }
     
@@ -2930,11 +2989,11 @@ GetPrevRowInfoOfSameProcess() {
 ; -----------------------------------------------------------------------------
 ; Include files
 ; -----------------------------------------------------------------------------
+#Include %A_ScriptDir%\Lib\CSVLib.ahk
+#Include %A_ScriptDir%\Lib\AddTooltip.ahk
 #Include %A_ScriptDir%\CommonUtils.ahk
 #Include %A_ScriptDir%\AboutDialog.ahk
 #Include %A_ScriptDir%\ReadMe.ahk
 #Include %A_ScriptDir%\Help.ahk
 #Include %A_ScriptDir%\ReleaseNotes.ahk
 #Include %A_ScriptDir%\SettingsDialog.ahk
-#Include %A_ScriptDir%\Lib\CSVLib.ahk
-#Include %A_ScriptDir%\Lib\AddTooltip.ahk

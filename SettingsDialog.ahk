@@ -12,9 +12,12 @@ o-----------------------------------------------------------------------------o
 
 #Include %A_ScriptDir%\CommonUtils.ahk
 
+
 ; This is for my testing
 ;~ If (true) {
     ;~ #Include %A_ScriptDir%\Lib\AddTooltip.ahk
+    ;~ #Include %A_ScriptDir%\ATATooltips.ahk
+
     ;~ ProductName                 := "AltTabAlternative"
     ;~ SettingsINIFileName         := "AltTabAlternativeSettings.ini"
     ;~ SettingsDirPath             := A_AppData . "\" . ProductName
@@ -105,10 +108,10 @@ ShowSettingsDialog()
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xm ym+5 vSDStorageText hwndhSDStorageText gDoNothing, Storage:
     Gui, Add, Edit, x+3 yp-3 w406 vSDStorageEdit hwndhSDStorageEdit ReadOnly -Multi R1, %SettingsINIFilePath%
-    AddTooltip(hSDStorageText, "Current storage of AltTabAlternative settings")
-    AddTooltip(hSDStorageEdit, "Current storage of AltTabAlternative settings")
+    AddTooltip(hSDStorageText, SDStorageTextTooltip)
+    AddTooltip(hSDStorageEdit, SDStorageTextTooltip)
     Gui, Add, Button, x+3 yp-1 w80 vSDExportBtn hwndhSDExportBtn gSDExportBtnHandler, &Export...
-    AddTooltip(hSDExportBtn, "Export your current settings to INI file")
+    AddTooltip(hSDExportBtn, SDExportBtnTooltip)
 
     ; -----------------------------------------------------------------------------
     ; SearchString Font Group
@@ -117,26 +120,26 @@ ShowSettingsDialog()
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xm+5 yp+21 vSDSearchStringFontNameText hwndhSDSearchStringFontNameText gDoNothing, &Name:
     Gui, Add, DropDownList, xm+%SecondColumnOffset% yp-3 w200 R15 vSDSearchStringFontNameDDL hwndhSDSearchStringFontNameDDL Choose%SearchStringFontIndex% gSDSearchStringFontNameDDLHandler, %fontDropDownList%
-    AddTooltip(hSDSearchStringFontNameText, "Face name for search string font")
-    AddTooltip(hSDSearchStringFontNameDDL,  "Face name for search string font")
+    AddTooltip(hSDSearchStringFontNameText, SDSearchStringFontNameTooltip)
+    AddTooltip(hSDSearchStringFontNameDDL,  SDSearchStringFontNameTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xm+5 y+6 vSDSearchStringFontSizeText hwndhSDSearchStringFontSizeText gDoNothing, &Size:
     Gui, Add, Edit, xm+%SecondColumnOffset% yp-3 w200 hwndhSDSearchStringFontSizeEdit
     Gui, Add, UpDown, vSDSearchStringFontSizeUpDown hwndhSDSearchStringFontSizeUpDown gSDSearchStringFontSizeUpDownHandler Range8-25, %SearchStringFontSize%
-    AddTooltip(hSDSearchStringFontSizeText,   "Size of Search string font")
-    AddTooltip(hSDSearchStringFontSizeEdit,   "Size of Search string font")
-    AddTooltip(hSDSearchStringFontSizeUpDown, "Size of Search string font")
+    AddTooltip(hSDSearchStringFontSizeText,   SDSearchStringFontSizeTooltip)
+    AddTooltip(hSDSearchStringFontSizeEdit,   SDSearchStringFontSizeTooltip)
+    AddTooltip(hSDSearchStringFontSizeUpDown, SDSearchStringFontSizeTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xm+5 y+6 vSDSearchStringFontColorText hwndhSDSearchStringFontColorText gDoNothing, &Color:
     Gui, Add, Progress, xm+%SecondColumnOffset% yp-3 w200 h21 vSDSearchStringFontColorProgress hwndhSDSearchStringFontColorProgress c%SearchStringFontColor% BackgroundBlack Disabled, 100
     Gui, Add, Text, xp yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDSearchStringFontColorProgressText hwndhSDSearchStringFontColorProgressText gSDSearchStringFontColorChangeBtnHandler
-    AddTooltip(hSDSearchStringFontColorText,         "Text color for search string font")
-    AddTooltip(hSDSearchStringFontColorProgressText, "Text color for search string font")
+    AddTooltip(hSDSearchStringFontColorText,         SDSearchStringFontColorTooltip)
+    AddTooltip(hSDSearchStringFontColorProgressText, SDSearchStringFontColorTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xm+5 y+6 vSDSearchStringFontStyleText hwndhSDSearchStringFontStyleText gDoNothing, St&yle:
     Gui, Add, DropDownList, xm+%SecondColumnOffset% yp-3 w200 vSDSearchStringFontStyleDDL hwndhSDSearchStringFontStyleDDL gSDSearchStringFontStyleDDLHandler Choose%SearchStringFontStyleIndex%, norm|italic|bold|bold italic
-    AddTooltip(hSDSearchStringFontStyleText, "Text style for search string font")
-    AddTooltip(hSDSearchStringFontStyleDDL,  "Text style for search string font")
+    AddTooltip(hSDSearchStringFontStyleText, SDSearchStringFontStyleTooltip)
+    AddTooltip(hSDSearchStringFontStyleDDL,  SDSearchStringFontStyleTooltip)
     ; -----------------------------------------------------------------------------
 
     ; -----------------------------------------------------------------------------
@@ -147,106 +150,125 @@ ShowSettingsDialog()
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xs+5 yp+21 vSDListViewFontNameText hwndhSDListViewFontNameText gDoNothing, &Name:
     Gui, Add, DropDownList, xs+%SecondColumnOffset% yp-3 w200 R15 vSDListViewFontNameDDL hwndhSDListViewFontNameDDL gSDListViewFontNameDDLHandler Choose%ListViewFontIndex%, %fontDropDownList%
-    AddTooltip(hSDListViewFontNameText, "Face name for list view item font")
-    AddTooltip(hSDListViewFontNameDDL,  "Face name for list view item font")
+    AddTooltip(hSDListViewFontNameText, SDListViewFontNameTooltip)
+    AddTooltip(hSDListViewFontNameDDL,  SDListViewFontNameTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xs+5 y+6 vSDListViewFontSizeText hwndhSDListViewFontSizeText gDoNothing, &Size:
     Gui, Add, Edit, xs+%SecondColumnOffset% yp-3 w200 hwndhSDListViewFontSizeEdit gDoNothing
     Gui, Add, UpDown, vSDListViewFontSizeUpDown hwndhSDListViewFontSizeUpDown gSDListViewFontSizeUpDownHandler Range8-25, %ListViewFontSize%
-    AddTooltip(hSDListViewFontSizeText,   "Size of list view item font")
-    AddTooltip(hSDListViewFontSizeEdit,   "Size of list view item font")
-    AddTooltip(hSDListViewFontSizeUpDown, "Size of list view item font")
+    AddTooltip(hSDListViewFontSizeText,   SDListViewFontSizeTooltip)
+    AddTooltip(hSDListViewFontSizeEdit,   SDListViewFontSizeTooltip)
+    AddTooltip(hSDListViewFontSizeUpDown, SDListViewFontSizeTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xs+5 y+6 vSDListViewFontColorText hwndhSDListViewFontColorText gDoNothing, &Color:
     Gui, Add, Progress, xs+%SecondColumnOffset% yp-3 w200 h21 vSDListViewFontColorProgress c%ListViewFontColor% BackgroundBlack Disabled, 100
     Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewFontColorProgressText hwndhSDListViewFontColorProgressText gSDListViewFontColorChangeBtnHandler
-    AddTooltip(hSDListViewFontColorText,         "Text color for list view item font")
-    AddTooltip(hSDListViewFontColorProgressText, "Text color for list view item font")
+    AddTooltip(hSDListViewFontColorText,         SDListViewFontColorTooltip)
+    AddTooltip(hSDListViewFontColorProgressText, SDListViewFontColorTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xs+5 y+6 vSDListViewFontStyleText hwndhSDListViewFontStyleText gDoNothing, St&yle:
     Gui, Add, DropDownList, xs+%SecondColumnOffset% yp-3 w200 vSDListViewFontStyleDDL hwndhSDListViewFontStyleDDL gSDListViewFontStyleDDLHandler Choose%ListViewFontStyleIndex%, norm|italic|bold|bold italic
-    AddTooltip(hSDListViewFontStyleText, "Text style for list view item font")
-    AddTooltip(hSDListViewFontStyleDDL,  "Text style for list view item font")
+    AddTooltip(hSDListViewFontStyleText, SDListViewFontStyleTooltip)
+    AddTooltip(hSDListViewFontStyleDDL,  SDListViewFontStyleTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xs+5 y+6 vSDListViewBkColorText hwndhSDListViewBkColorText gDoNothing, &Bk Color:
     Gui, Add, Progress, xs+%SecondColumnOffset% yp-3 w200 h21 vSDListViewBkColorProgress c%ListViewBackgroundColor% BackgroundBlack Disabled, 100
     Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewBkColorProgressText hwndhSDListViewBkColorProgressText gSDListViewBkColorChangeBtnHandler
-    AddTooltip(hSDListViewBkColorText,         "Background color for list view item")
-    AddTooltip(hSDListViewBkColorProgressText, "Background color for list view item")
+    AddTooltip(hSDListViewBkColorText,         SDListViewBkColorTooltip)
+    AddTooltip(hSDListViewBkColorProgressText, SDListViewBkColorTooltip)
+    ; -----------------------------------------------------------------------------
+
+    ; -----------------------------------------------------------------------------
+    ; HiddenWindows Font Group
+    ; -----------------------------------------------------------------------------
+    SDControlPosX := SDGroupWidth + 3
+    SDControlPosY := SDGroupHeight + 38
+    Gui, Add, GroupBox, xm y%SDControlPosY% Section vHiddenWindowsGroupBox W531 H50 cBlue, Hidden Windows Font
+
+    Gui, Add, Text, xs+5 ys+20 vSDListViewHWFontColorText hwndhSDListViewHWFontColorText gDoNothing, &Color:
+    Gui, Add, Progress, xs+%SecondColumnOffset% yp-3 w200 h21 vSDListViewHWFontColorProgress c%ListViewHWFontColor% BackgroundBlack Disabled, 100
+    Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewHWFontColorProgressText hwndhSDListViewHWFontColorProgressText gSDListViewHWFontColorChangeBtnHandler
+    AddTooltip(hSDListViewHWFontColorText,         SDListViewHWFontColorTooltip)
+    AddTooltip(hSDListViewHWFontColorProgressText, SDListViewHWFontColorTooltip)
+    ; -----------------------------------------------------------------------------
+    ;~ Gui, Add, Text, xs+5 y+6 vSDListViewHWBkColorText hwndhSDListViewHWBkColorText gDoNothing, &Bk Color:
+    Gui, Add, Text, xs+272 ys+20 vSDListViewHWBkColorText hwndhSDListViewHWBkColorText gDoNothing, &Bk Color:
+    Gui, Add, Progress, xs+324 yp-3 w200 h21 vSDListViewHWBkColorProgress c%ListViewHWBackgroundColor% BackgroundBlack Disabled, 100
+    Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewHWBkColorProgressText hwndhSDListViewHWBkColorProgressText gSDListViewHWBkColorChangeBtnHandler
+    AddTooltip(hSDListViewHWBkColorText,         SDListViewHWBkColorTooltip)
+    AddTooltip(hSDListViewHWBkColorProgressText, SDListViewHWBkColorTooltip)
+    ; -----------------------------------------------------------------------------
+
+    ColumnOffset := 141
+    ; -----------------------------------------------------------------------------
+    ; Alt+Backtick Settings Group
+    ; -----------------------------------------------------------------------------
+    Gui, Add, GroupBox, xm Section vAltBacktickGroupBox W531 H90 cBlue, AltBacktick
+    ; -----------------------------------------------------------------------------
+    Gui, Add, Checkbox, xs+5 ys+20 vSDBacktickFilterWindowsCheckBox hwndhSDBacktickFilterWindowsCheckBox gSDBacktickFilterWindowsCheckBoxHandler Checked%BacktickFilterWindows%, &Display windows of the same application only (Alt+Backtick)
+    AddTooltip(hSDBacktickFilterWindowsCheckBox, SDBacktickFilterWindowsCheckBoxTooltip)
+    ; -----------------------------------------------------------------------------
+    Gui, Add, Text, xs+5 y+18 hwndhSDSimilarProcessGroupsText vSDSimilarProcessGroupsText gSDGenericHandler, Similar Process &Groups
+    Gui, Font, s10 cBlue, Lucida Console
+    Gui, Add, Edit, xs+%ColumnOffset% yp-15 w384 hwndhSDSimilarProcessGroupsEdit vSDSimilarProcessGroupsEdit Multi R3 gSDGenericHandler, %SimilarProcessGroupsStr%
+    Gui, Font
+    AddTooltip(hSDSimilarProcessGroupsText, SDSimilarProcessGroupsTooltip)
+    AddTooltip(hSDSimilarProcessGroupsEdit, SDSimilarProcessGroupsTooltip)
     ; -----------------------------------------------------------------------------
 
     ColumnOffset := 141
     ; -----------------------------------------------------------------------------
     ; General Settings Group
     ; -----------------------------------------------------------------------------
-    Gui, Add, GroupBox, xm Section vGeneralGroupBox W%SDGroupWidth% H174 cBlue, General
+    Gui, Add, GroupBox, xm Section vGeneralGroupBox W531 H153 cBlue, General
     ; -----------------------------------------------------------------------------
-    Gui, Add, Checkbox, xs+5 ys+20 vSDBacktickFilterWindowsCheckBox hwndhSDBacktickFilterWindowsCheckBox gSDBacktickFilterWindowsCheckBoxHandler Checked%BacktickFilterWindows%, &Display windows of the same application (Alt+``)
-    AddTooltip(hSDBacktickFilterWindowsCheckBox, "Display windows of the same application only when Alt+Backtick is pressed.")
-    ; -----------------------------------------------------------------------------
-    Gui, Add, Checkbox, xs+5 y+6 vSDShowStatusBarCheckBox hwndhSDShowStatusBarCheckBox gSDShowStatusBarCheckBoxHandler Checked%ShowStatusBar%, &Show StatusBar
-    AddTooltip(hSDShowStatusBarCheckBox, "Show status bar")
+    Gui, Add, Checkbox, xs+5 ys+20 vSDShowStatusBarCheckBox hwndhSDShowStatusBarCheckBox gSDShowStatusBarCheckBoxHandler Checked%ShowStatusBar%, &Show StatusBar
+    AddTooltip(hSDShowStatusBarCheckBox, SDShowStatusBarTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Checkbox, xs+5 y+6 vSDPromptTerminateAllCheckBox hwndhSDPromptTerminateAllCheckBox gSDPromptTerminateAllCheckBoxHandler Checked%PromptTerminateAll%, &PromptTerminateAll
-    AddTooltip(hSDPromptTerminateAllCheckBox, "Prompts for confirmation before terminating a window/process")
+    AddTooltip(hSDPromptTerminateAllCheckBox, SDPromptTerminateAllTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xs+5 y+6 hwndhSDWindowTransparencyText gDoNothing, Window &Transparency
     Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48 hwndhSDWindowTransparencyEdit
     Gui, Add, UpDown, vSDWindowTransparencyUpDown hwndhSDWindowTransparencyUpDown gSDWindowTransparencyUpDownHandler Range100-255, %WindowTransparency%
-    AddTooltip(hSDWindowTransparencyText,   "Indicates the degree of transparency.`n    0 - makes the window invisible.`n255 - makes it opaque.")
-    AddTooltip(hSDWindowTransparencyEdit,   "Indicates the degree of transparency.`n    0 - makes the window invisible.`n255 - makes it opaque.")
-    AddTooltip(hSDWindowTransparencyUpDown, "Indicates the degree of transparency.`n    0 - makes the window invisible.`n255 - makes it opaque.")
+    AddTooltip(hSDWindowTransparencyText,   SDWindowTransparencyTooltip)
+    AddTooltip(hSDWindowTransparencyEdit,   SDWindowTransparencyTooltip)
+    AddTooltip(hSDWindowTransparencyUpDown, SDWindowTransparencyTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xs+5 y+6 hwndhSDWindowWidthPercentageText gDoNothing, Window &Width (`%)
     Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48 hwndhSDWindowWidthPercentageEdit
     Gui, Add, UpDown, vSDWindowWidthPercentageUpDown hwndhSDWindowWidthPercentageUpDown gSDWindowWidthPercentageUpDownHandler Range40-90, %WindowWidthPercentage%
-    AddTooltip(hSDWindowWidthPercentageText, "Main window width wrt percentage of screen width")
-    AddTooltip(hSDWindowWidthPercentageEdit, "Main window width wrt percentage of screen width")
-    AddTooltip(hSDWindowWidthPercentageUpDown, "Main window width wrt percentage of screen width")
+    AddTooltip(hSDWindowWidthPercentageText,   SDWindowWidthPercentageTooltip)
+    AddTooltip(hSDWindowWidthPercentageEdit,   SDWindowWidthPercentageTooltip)
+    AddTooltip(hSDWindowWidthPercentageUpDown, SDWindowWidthPercentageTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xs+5 y+6 hwndhSDWindowHeightMaxPercentageText gDoNothing, Window &Height Max (`%)
     Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48 hwndhSDWindowHeightMaxPercentageEdit
     Gui, Add, UpDown, vSDWindowHeightMaxPercentageUpDown hwndhSDWindowHeightMaxPercentageUpDown gSDWindowHeightMaxPercentageUpDownHandler Range10-90, %WindowHeightMaxPercentage%
-    AddTooltip(hSDWindowHeightMaxPercentageText,   "Main window maximum height wrt percentage of screen height`n`nIf there are more number of processes which exceeds the WindowHeightMax to accommodate `nall the tasks then resize the window to WindowHeightMax according scroll bar presense")
-    AddTooltip(hSDWindowHeightMaxPercentageEdit,   "Main window maximum height wrt percentage of screen height`n`nIf there are more number of processes which exceeds the WindowHeightMax to accommodate `nall the tasks then resize the window to WindowHeightMax according scroll bar presense")
-    AddTooltip(hSDWindowHeightMaxPercentageUpDown,   "Main window maximum height wrt percentage of screen height`n`nIf there are more number of processes which exceeds the WindowHeightMax to accommodate `nall the tasks then resize the window to WindowHeightMax according scroll bar presense")
+    AddTooltip(hSDWindowHeightMaxPercentageText,   SDWindowHeightMaxPercentageTooltip)
+    AddTooltip(hSDWindowHeightMaxPercentageEdit,   SDWindowHeightMaxPercentageTooltip)
+    AddTooltip(hSDWindowHeightMaxPercentageUpDown, SDWindowHeightMaxPercentageTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xs+5 y+6 vSDCheckForUpdatesText hwndhSDCheckForUpdatesText gDoNothing, Check for &updates
     Gui, Add, DropDownList, xs+%ColumnOffset% yp-3 w60 vSDCheckForUpdatesDDL hwndhSDCheckForUpdatesDDL gSDCheckForUpdatesDDLHandler Choose%UpdateOptionsIndex%, %UpdateOptionsList%
-    AddTooltip(hSDCheckForUpdatesText, "How frequently check for updates")
-    AddTooltip(hSDCheckForUpdatesDDL,  "How frequently check for updates")
+    AddTooltip(hSDCheckForUpdatesText, SDCheckForUpdatesTooltip)
+    AddTooltip(hSDCheckForUpdatesDDL,  SDCheckForUpdatesTooltip)
     ; -----------------------------------------------------------------------------
     
     ; -----------------------------------------------------------------------------
-    ; HiddenWindows Font Group
+    ; Ok, Cancel Buttons
     ; -----------------------------------------------------------------------------
-    SDControlPosX := SDGroupWidth + 3
-    SDControlPosY := SDGroupHeight + 38
-    Gui, Add, GroupBox, xm+%SDControlPosX% y%SDControlPosY% Section vHiddenWindowsGroupBox W%SDGroupWidth% H71 cBlue, Hidden Windows Font
-
-    Gui, Add, Text, xs+5 ys+20 vSDListViewHWFontColorText hwndhSDListViewHWFontColorText gDoNothing, &Color:
-    Gui, Add, Progress, xs+%SecondColumnOffset% yp-3 w200 h21 vSDListViewHWFontColorProgress c%ListViewHWFontColor% BackgroundBlack Disabled, 100
-    Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewHWFontColorProgressText hwndhSDListViewHWFontColorProgressText gSDListViewHWFontColorChangeBtnHandler
-    AddTooltip(hSDListViewHWFontColorText,         "Text color for list view hidden window item font")
-    AddTooltip(hSDListViewHWFontColorProgressText, "Text color for list view hidden window item font")
-    ; -----------------------------------------------------------------------------
-    Gui, Add, Text, xs+5 y+6 vSDListViewHWBkColorText hwndhSDListViewHWBkColorText gDoNothing, &Bk Color:
-    Gui, Add, Progress, xs+%SecondColumnOffset% yp-3 w200 h21 vSDListViewHWBkColorProgress c%ListViewHWBackgroundColor% BackgroundBlack Disabled, 100
-    Gui, Add, Text, xs yp wp hp cYellow BackgroundTrans +TabStop Center 0x200 vSDListViewHWBkColorProgressText hwndhSDListViewHWBkColorProgressText gSDListViewHWBkColorChangeBtnHandler
-    AddTooltip(hSDListViewHWBkColorText,         "Background color for list view hidden window item")
-    AddTooltip(hSDListViewHWBkColorProgressText, "Background color for list view hidden window item")
-    ; -----------------------------------------------------------------------------
-    
     Gui, Add, Button, xm  w80 vSDOkBtn gOkBtnHandler hwndhSDOkBtn +Default, &OK
-    AddTooltip(hSDOkBtn, "Save the settings to INI file if modified and close dialog")
+    AddTooltip(hSDOkBtn, SDOkBtnTooltip)
     Gui, Add, Button, x+3 w80 vSDApplyBtn hwndhSDApplyBtn gSDApplyBtnHandler -Default Disabled, &Apply
-    AddTooltip(hSDApplyBtn, "Save the modified settings to INI file and Don't close dialog")
+    AddTooltip(hSDApplyBtn, SDApplyBtnTooltip)
     Gui, Add, Button, x+3 w80 vSDCancelBtn gSDCancelBtnHandler hwndhSDCancelBtn -Default Disabled, Cance&l
-    AddTooltip(hSDCancelBtn, "Don't save the modified settings to INI file and close dialog")
+    AddTooltip(hSDCancelBtn, SDCancelBtnTooltip)
     Gui, Add, Button, x+3 w80 vSDResetBtn hwndhSDResetBtn gResetBtnHandler, &Reset...
-    AddTooltip(hSDResetBtn, "Reset all settings to defaults")
+    AddTooltip(hSDResetBtn, SDResetBtnTooltip)
     Gui, Add, Button, x+3 w80 vSDImportBtn hwndhSDImportBtn gImportBtnHandler, &Import...
-    AddTooltip(hSDImportBtn, "Import settings from INI file")
+    AddTooltip(hSDImportBtn, SDImportBtnTooltip)
+    ; -----------------------------------------------------------------------------
     
     Gui, Show, AutoSize Center
     Return
@@ -291,6 +313,14 @@ Return
 ; Save the modified settings from controls to the variables
 ; -----------------------------------------------------------------------------
 ApplySettings:
+    ; Check if the settings are valid
+    isValid := IsValidSimilarProcessGroupsString(tSDSimilarProcessGroupsStr)
+    if (!isValid) {
+        Gui, +OwnDialogs    ; To display a modal dialog
+        MsgBox, , Invalid Similar Process Groups, Similar Process Groups contains invalid characters.`nA file name can't contain any of the following characters: \ / : * ? " < > |
+        return
+    }
+
     GuiControlGet, SearchStringFontName, , SDSearchStringFontNameDDL
     GuiControlGet, SearchStringFontSize, , SDSearchStringFontSizeUpDown
     SearchStringFontColor := tSDSearchStringFontColor
@@ -304,8 +334,13 @@ ApplySettings:
     ListViewHWFontColor         := tSDListViewHWFontColor
     ListViewHWBackgroundColor   := tSDListViewHWBackgroundColor
     
-    GuiControlGet, PromptTerminateAll, , SDPromptTerminateAllCheckBox
     GuiControlGet, BacktickFilterWindows, , SDBacktickFilterWindowsCheckBox
+    GuiControlGet, SimilarProcessGroupsStr, , SDSimilarProcessGroupsEdit
+    PrintKV("SimilarProcessGroupsStr", SimilarProcessGroupsStr)
+    ProcessDictList := GetProcessDictList(SimilarProcessGroupsStr)
+    PrintProcessDictList("ProcessDictList", ProcessDictList)
+    
+    GuiControlGet, PromptTerminateAll, , SDPromptTerminateAllCheckBox
     GuiControlGet, ShowStatusBar, , SDShowStatusBarCheckBox
     GuiControlGet, WindowTransparency, , SDWindowTransparencyUpDown
     GuiControlGet, WindowWidthPercentage, , SDWindowWidthPercentageUpDown
@@ -600,6 +635,17 @@ SDCheckForUpdatesDDLHandler:
     CheckSettingsModified()
 Return
 
+
+; -----------------------------------------------------------------------------
+; All settings generic handler...
+; -----------------------------------------------------------------------------
+SDGenericHandler:
+    PrintLabel()
+    GuiControlGet, tSDSimilarProcessGroupsStr, , SDSimilarProcessGroupsEdit
+    ;~ PrintKV("tSDSimilarProcessGroupsStr", tSDSimilarProcessGroupsStr)
+    CheckSettingsModified()
+Return
+
 } ; ShowSettingsDialog ends here!
 
 
@@ -632,6 +678,7 @@ IsSettingsModified() {
         or tSDListViewHWFontColor         != ListViewHWFontColor
         or tSDListViewHWBackgroundColor   != ListViewHWBackgroundColor	
         or tSDBacktickFilterWindows       != BacktickFilterWindows
+        or tSDSimilarProcessGroupsStr     != SimilarProcessGroupsStr
         or tSDShowStatusBar               != ShowStatusBar
         or tSDPromptTerminateAll          != PromptTerminateAll
         or tSDWindowTransparency          != WindowTransparency
@@ -753,8 +800,10 @@ FontStyle=%ListViewFontStyleDefault%
 BackgroundColor=%ListViewBackgroundColorDefault%
 HWFontColor=%ListViewHWFontColorDefault%
 HWBackgroundColor=%ListViewHWBackgroundColorDefault%
+[Backtick]
+FilterWindows=%BacktickFilterWindowsDefault%
+SimilarProcessGroups=%SimilarProcessGroupsStrDefault%
 [General]
-BacktickFilterWindows=%BacktickFilterWindowsDefault%
 ShowStatusBar=%ShowStatusBarDefault%
 PromptTerminateAll=%PromptTerminateAllDefault%
 WindowTransparency=%WindowTransparencyDefault%
@@ -813,7 +862,8 @@ IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
         ReadVariable("ListViewBackgroundColor", 	SettingsINIFilePathIn, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
         ReadVariable("ListViewHWFontColor",       	SettingsINIFilePathIn, "ListView",     "HWFontColor",               ListViewHWFontColorDefault)
         ReadVariable("ListViewHWBackgroundColor", 	SettingsINIFilePathIn, "ListView",     "HWBackgroundColor",         ListViewHWBackgroundColorDefault)
-        ReadVariable("BacktickFilterWindows",      	SettingsINIFilePathIn, "General",      "BacktickFilterWindows",     BacktickFilterWindowsDefault)
+        ReadVariable("BacktickFilterWindows",      	SettingsINIFilePathIn, "Backtick",     "FilterWindows",             BacktickFilterWindowsDefault)
+        ReadVariable("SimilarProcessGroupsStr",     SettingsINIFilePathIn, "Backtick",     "SimilarProcessGroups",      SimilarProcessGroupsStrDefault)
         ReadVariable("ShowStatusBar",      	        SettingsINIFilePathIn, "General",      "ShowStatusBar",             ShowStatusBarDefault)
         ReadVariable("PromptTerminateAll",      	SettingsINIFilePathIn, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
         ReadVariable("WindowTransparency",      	SettingsINIFilePathIn, "General",      "WindowTransparency",        WindowTransparencyDefault)
@@ -825,6 +875,9 @@ IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
         ListViewBackgroundColorBGR      := RGBtoBGR(ListViewBackgroundColor)
         ListViewHWFontColorBGR          := RGBtoBGR(ListViewHWFontColor)
         ListViewHWBackgroundColorBGR    := RGBtoBGR(ListViewHWBackgroundColor)
+        
+        ProcessDictList := GetProcessDictList(SimilarProcessGroupsStr)
+        ProcessDictListIndex := -1
     }
     else
     {
@@ -839,7 +892,8 @@ IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
         WriteVariable(ListViewBackgroundColor,      SettingsINIFilePathIn, "ListView",     "BackgroundColor",           ListViewBackgroundColorDefault)
         WriteVariable(ListViewHWFontColor,          SettingsINIFilePathIn, "ListView",     "HWFontColor",               ListViewHWFontColorDefault)
         WriteVariable(ListViewHWBackgroundColor,    SettingsINIFilePathIn, "ListView",     "HWBackgroundColor",         ListViewHWBackgroundColorDefault)
-        WriteVariable(BacktickFilterWindows,        SettingsINIFilePathIn, "General",      "BacktickFilterWindows",     BacktickFilterWindowsDefault)
+        WriteVariable(BacktickFilterWindows,        SettingsINIFilePathIn, "Backtick",     "FilterWindows",             BacktickFilterWindowsDefault)
+        WriteVariable(SimilarProcessGroupsStr,      SettingsINIFilePathIn, "Backtick",     "SimilarProcessGroups",      SimilarProcessGroupsStrDefault)
         WriteVariable(ShowStatusBar,                SettingsINIFilePathIn, "General",      "ShowStatusBar",             ShowStatusBarDefault)
         WriteVariable(PromptTerminateAll,           SettingsINIFilePathIn, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
         WriteVariable(WindowTransparency,           SettingsINIFilePathIn, "General",      "WindowTransparency",        WindowTransparencyDefault)
@@ -1008,6 +1062,8 @@ PrintSettings() {
     PrintKV("ListViewHWFontColor", ListViewHWFontColor)
     PrintKV("ListViewHWBackgroundColor", ListViewHWBackgroundColor)
     PrintKV("BacktickFilterWindows", BacktickFilterWindows)
+    PrintKV("SimilarProcessGroupsStr", SimilarProcessGroupsStr)
+    PrintProcessDictList("ProcessDictList", ProcessDictList)    
     PrintKV("ShowStatusBar", ShowStatusBar)
     PrintKV("PromptTerminateAll", PromptTerminateAll)
     PrintKV("WindowTransparency", WindowTransparency)
@@ -1034,6 +1090,7 @@ PrintDefaultSettings() {
     PrintKV("ListViewHWFontColorDefault", ListViewHWFontColorDefault)
     PrintKV("ListViewHWBackgroundColorDefault", ListViewHWBackgroundColorDefault)
     PrintKV("BacktickFilterWindowsDefault", BacktickFilterWindowsDefault)
+    PrintKV("SimilarProcessGroupsStrDefault", SimilarProcessGroupsStrDefault)
     PrintKV("ShowStatusBarDefault", ShowStatusBarDefault)
     PrintKV("PromptTerminateAllDefault", PromptTerminateAllDefault)
     PrintKV("WindowTransparencyDefault", WindowTransparencyDefault)
@@ -1099,6 +1156,7 @@ StoreSettingsInTempVariables() {
     tSDListViewHWFontColor          := ListViewHWFontColor
     tSDListViewHWBackgroundColor    := ListViewHWBackgroundColor
     tSDBacktickFilterWindows        := BacktickFilterWindows
+    tSDSimilarProcessGroupsStr      := SimilarProcessGroupsStr
     tSDShowStatusBar                := ShowStatusBar
     tSDPromptTerminateAll           := PromptTerminateAll
     tSDWindowTransparency           := WindowTransparency
@@ -1126,8 +1184,9 @@ DefineDefaultSettings() {
     ListViewHWFontColorDefault          := 0x000000
     ListViewHWBackgroundColorDefault    := 0xFFC90E
     BacktickFilterWindowsDefault        := true
-    ShowStatusBarDefault                := 1
-    PromptTerminateAllDefault           := 1
+    SimilarProcessGroupsStrDefault      := "notepad.exe/notepad++.exe|iexplore.exe/chrome.exe/firefox.exe|explorer.exe/xplorer2_lite.exe/xplorer2.exe/xplorer2_64.exe"
+    ShowStatusBarDefault                := false
+    PromptTerminateAllDefault           := true
     WindowTransparencyDefault           := 222
     WindowWidthPercentageDefault        := 45
     WindowHeightMaxPercentageDefault    := 50
@@ -1269,7 +1328,7 @@ CheckForUpdatesFunction(ShowNoUpdatesMsgBox=false) {
 ; -----------------------------------------------------------------------------
 IsLatestRelease(programVersion, currentVersion) {
 	StringSplit, programVersionArray, programVersion, `.
-	StringSplit, currentVersionArray, currentVersion, `.    
+	StringSplit, currentVersionArray, currentVersion, `.
 
 	Loop % currentVersionArray0 - programVersionArray0
     {
@@ -1287,6 +1346,88 @@ IsLatestRelease(programVersion, currentVersion) {
         }
     }
 	return true
+}
+
+
+; -----------------------------------------------------------------------------
+; This function returns true if processes in the SimilarProcessGroupsStr are
+;   seperated by | and processes are seperated by / otherwise false.
+; Ex: notepad++.exe/notepad.exe|chrome.exe/iexplore.exe|explorer.exe/xplorer2_64.exe
+; -----------------------------------------------------------------------------
+IsValidSimilarProcessGroupsString(SimilarProcessGroupsStr) {
+	ProcessNameRegEx := "^[^\\/:*?""<>|]+.exe$"
+	StringSplit, procNames, SimilarProcessGroupsStr, "/|"
+	Loop, %procNames0% {
+		procName := procNames%A_Index%
+		PrintKV("procName", procName)
+		FoundPos := RegExMatch(procName, ProcessNameRegEx)
+		if (FoundPos == 0) {
+			return false
+		}
+	}
+	return true
+}
+
+
+; -----------------------------------------------------------------------------
+; This function returns the list of process name dictionary ([{}])
+;	SimilarProcessGroupsStr : ProcessList are seperated by | and processes are seperated by /.
+;		Ex: notepad++.exe/notepad.exe|chrome.exe/iexplore.exe|explorer.exe/xplorer2_64.exe
+; -----------------------------------------------------------------------------
+GetProcessDictList(SimilarProcessGroupsStr) {
+	ret := []
+	StringSplit, processLists, SimilarProcessGroupsStr, "|"
+	processListsLen := processLists0
+	
+	Loop, %processListsLen% {
+		dict := {}
+		i := A_Index
+		StringSplit, processList, processLists%i%, "/"
+		Loop, %processList0% {
+			j := A_Index
+			dict[processList%j%] := true
+		}
+		ret.Insert(dict)
+	}
+	return ret
+}
+
+
+; -----------------------------------------------------------------------------
+; This function returns the index of ProcessDictList if procName found
+; else returns -1
+; -----------------------------------------------------------------------------
+GetProcessDictListIndex(ProcessDictList, procName) {
+	len := ProcessDictList.Length()
+	Loop, %len% {
+		if (ProcessDictList[A_Index].HasKey(procName)) {
+			return A_Index
+		}
+	}
+	return -1
+}
+
+
+; -----------------------------------------------------------------------------
+; Print ProcessDictList
+; -----------------------------------------------------------------------------
+PrintProcessDictList(str, lst) {
+    Local len
+    len := lst.Length()
+	FormatTime, CurrentTime, , yyyy-MM-dd HH:mm:ss
+    FileAppend, [%CurrentTime%] %str% = (%len%)[, *
+    Loop, % len
+    {
+        ;~ FileAppend, % lst[A_Index] . "`, " , *
+		dict := lst[A_Index]
+		FileAppend, `n`titem[%A_Index%] = {, *
+		for key, val in dict {
+			kv := Format("({}, {}), ", key, val)
+			FileAppend, % kv, *
+	    }
+		FileAppend, }, *
+    }
+    FileAppend, `n]`n, *
 }
 
 

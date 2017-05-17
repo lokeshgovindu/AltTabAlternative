@@ -30,7 +30,9 @@ o-----------------------------------------------------------------------------o
 ;~ style='color:#002060'> is a small application created in <a
 ;~ href="https://autohotkey.com/"><span class=SpellE><span style='color:#002060'>AutoHotkey</span></span></a>,
 ;~ is an alternative for windows native task switcher (<span class=SpellE>Alt+Tab</span>
-;~ / <span class=SpellE>Alt+Shift+Tab</span>).</span><br>
+;~ / <span class=SpellE>Alt+Shift+Tab</span>).
+;~ It also supports Alt+Backtick / Alt+Shift+Backtick to switch between the windows of the same application.</span>
+;~ <br>
 ;~ <br>
 ;~ </span>
 ;~ <span class=SpellE><b style='mso-bidi-font-weight:normal'><span
@@ -40,7 +42,8 @@ o-----------------------------------------------------------------------------o
 ;~ 12.0pt;font-family:"Calibri",sans-serif;mso-fareast-font-family:"Times New Roman";
 ;~ color:#002060'><br>
 ;~ <span class=SpellE>FullVersion %ATAPRODUCTFULLVERSION%</span><br>
-;~ %ATACOPYRIGHT%<o:p></o:p></span></b>
+;~ %ATACOPYRIGHT%<o:p></o:p><br><a href="mailto:lokeshgovindu@gmail.com?Subject=AltTabAlternative">
+;~ mailto: lokeshgovindu@gmail.com</a></span></b>
 ;~ <hr>
 ;~ <b style='mso-bidi-font-weight:normal'>
 ;~ <span style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;
