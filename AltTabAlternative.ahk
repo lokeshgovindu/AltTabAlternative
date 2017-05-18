@@ -1379,7 +1379,7 @@ DisplayList:
                     if (DisplayListShown == 0 && Window_Found_Count == 0) {
                         BacktickProcName := procName
                         ProcessDictListIndex := GetProcessDictListIndex(ProcessDictList, BacktickProcName)
-                        PrintKV("[DisplayList] BacktickProcName", BacktickProcName)
+                        PrintKV("[DisplayList]     BacktickProcName", BacktickProcName)
                         PrintKV("[DisplayList] ProcessDictListIndex", ProcessDictListIndex)
                     }
                     else {
@@ -1387,14 +1387,20 @@ DisplayList:
                             ;~ continue
                         ;~ }
                         
-                        if (ProcessDictListIndex != -1) {
-                            if (not ProcessDictList[ProcessDictListIndex].HasKey(procName)) {
-                                continue
-                            }
-                        }
-                        else {
+                        bIsValidProc := (procName = BacktickProcName)
+                            || (ProcessDictListIndex != -1 && ProcessDictList[ProcessDictListIndex].HasKey(procName))
+                        if (not bIsValidProc) {
                             continue
                         }
+                        
+                        ;~ if (ProcessDictListIndex != -1) {
+                            ;~ if (not ProcessDictList[ProcessDictListIndex].HasKey(procName)) {
+                                ;~ continue
+                            ;~ }
+                        ;~ }
+                        ;~ else {
+                            ;~ continue
+                        ;~ }
                     }
                 }
                 
@@ -2496,6 +2502,7 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
     }
 
     ;~ PrintKV("[GetWindowsCount] windowFoundCount", windowFoundCount)
+    ;~ ExitApp
     return windowFoundCount
 }
 

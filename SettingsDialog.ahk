@@ -314,10 +314,12 @@ Return
 ; -----------------------------------------------------------------------------
 ApplySettings:
     ; Check if the settings are valid
-    isValid := IsValidSimilarProcessGroupsString(tSDSimilarProcessGroupsStr)
+    tSDSimilarProcessGroupsStr := Trim(tSDSimilarProcessGroupsStr, " `t`n")
+    errorMessage := ""
+    isValid := IsValidSimilarProcessGroupsString(tSDSimilarProcessGroupsStr, errorMessage)
     if (!isValid) {
         Gui, +OwnDialogs    ; To display a modal dialog
-        MsgBox, , Invalid Similar Process Groups, Similar Process Groups contains invalid characters.`nA file name can't contain any of the following characters: \ / : * ? " < > |
+        MsgBox, , Invalid Similar Process Groups, Similar Process Groups text contains invalid characters.`nA file name can't contain any of the following characters: \ / : * ? " < > | ``n ``t`n%errorMessage%`, please verify...
         return
     }
 
@@ -336,6 +338,7 @@ ApplySettings:
     
     GuiControlGet, BacktickFilterWindows, , SDBacktickFilterWindowsCheckBox
     GuiControlGet, SimilarProcessGroupsStr, , SDSimilarProcessGroupsEdit
+    SimilarProcessGroupsStr := Trim(SimilarProcessGroupsStr, " `t`n")
     PrintKV("SimilarProcessGroupsStr", SimilarProcessGroupsStr)
     ProcessDictList := GetProcessDictList(SimilarProcessGroupsStr)
     PrintProcessDictList("ProcessDictList", ProcessDictList)
@@ -1352,19 +1355,53 @@ IsLatestRelease(programVersion, currentVersion) {
 ; -----------------------------------------------------------------------------
 ; This function returns true if processes in the SimilarProcessGroupsStr are
 ;   seperated by | and processes are seperated by / otherwise false.
+; An invalid process name will be set to invalidProcName output variable if found.
 ; Ex: notepad++.exe/notepad.exe|chrome.exe/iexplore.exe|explorer.exe/xplorer2_64.exe
 ; -----------------------------------------------------------------------------
-IsValidSimilarProcessGroupsString(SimilarProcessGroupsStr) {
-	ProcessNameRegEx := "^[^\\/:*?""<>|]+.exe$"
+IsValidSimilarProcessGroupsString(SimilarProcessGroupsStr, ByRef errorMessage) {
+	ProcessNameRegEx := "^[^\\/:*?""<>|`n`t]+.exe$"
 	StringSplit, procNames, SimilarProcessGroupsStr, "/|"
 	Loop, %procNames0% {
 		procName := procNames%A_Index%
-		PrintKV("procName", procName)
 		FoundPos := RegExMatch(procName, ProcessNameRegEx)
 		if (FoundPos == 0) {
+			errorMessage := Format("Found an invalid process name [{}] in group {}", procName, A_Index)
 			return false
 		}
 	}
+	
+    ; Check whether any process is in multiple process groups
+    procDictList := GetProcessDictList(SimilarProcessGroupsStr)
+	isValid := IsValidProcessDictList(procDictList, errorMessage)
+	if (!isValid) {
+		return false
+	}
+	
+	return true
+}
+
+
+; -----------------------------------------------------------------------------
+; This methods checks if any process listed in multiple process groups.
+; Returns
+;    true : if no process is available in other process group
+;   false : otherwise
+; -----------------------------------------------------------------------------
+IsValidProcessDictList(procDictList, ByRef errorMessage) {
+    len := procDictList.Length()
+    Loop, % len {
+		i := A_Index, j := i + 1
+		dict := procDictList[i]
+		while j <= len {
+			for key, val in dict {
+				if (procDictList[j].HasKey(key)) {
+					errorMessage := Format("Process name [{}] is available in multiple groups {}, {}.", key, i, j)
+					return false
+				}
+			}
+			++j
+	    }
+    }
 	return true
 }
 
