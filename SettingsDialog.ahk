@@ -959,48 +959,6 @@ INIFile(VarName, SettingsINIFilePath, Section, Key, Default, ReadOrWrite="Read",
 
 
 ; -----------------------------------------------------------------------------
-; Move the list of buttons to the center of a window
-; -----------------------------------------------------------------------------
-MoveControlsToHorizontalCenter(Piped_CtrlvNames, Width)
-{
-    ;~ Local minX, minY, maxX, maxY
-    Local minX := 10000, minY := 10000, maxX := 0, maxY := 0
-    ;~ PrintKV("Width", Width)
-    Loop, Parse, Piped_CtrlvNames, |, %A_Space%
-    {
-        ; Get position and size of each control in list.
-        GuiControlGet, Pos, Pos, %A_LoopField%
-        ;~ Print4(PosX, PosY, PosW, PosH)
-        
-        ; Creates PosX, PosY, PosW, PosH
-        if (PosX < minX) { ; Check for minimum X
-            minX := PosX
-        }
-        if (PosY < minY) { ; Check for minimum Y
-            minY := PosY
-        }
-        if (PosX + PosW > maxX) { ;Check for maximum X
-            maxX := PosX + PosW
-        }
-        if (PosY + PosH > maxY) { ;Check for maximum Y
-            maxY := PosY + PosH
-        }
-    }
-    ;~ Print4(minX, minY, maxX, maxY)
-
-    offsetX := (Width - (maxX - minX + 1)) / 2 - minX
-    ;~ PrintKV("offsetX", offsetX)
-    Loop, Parse, Piped_CtrlvNames, |, %A_Space%
-    {
-        ; Get position and size of each control in list.
-        GuiControlGet, Pos, Pos, %A_LoopField%
-        newX := PosX + offsetX
-        ;~ PrintKV2("PosX", PosX, "newX", newX)
-        GuiControl, MoveDraw, %A_LoopField%, x%newX%
-    }	
-}
-
-; -----------------------------------------------------------------------------
 ; Show the color dialog box to choose the color
 ;
 ; Color  : specifies the color initially selected when the dialog box is created.
@@ -1289,66 +1247,14 @@ CheckForUpdatesFunction(ShowNoUpdatesMsgBox=false) {
         Return
     }
 
-    latestVersionChanges := "`n`nCHANGES`n"
-    FileRead, temp, %ATALatestVersionFile%
-    Loop, parse, temp, `n, `r
-    {
-        if (A_index = 1) {
-            latestVersion := A_LoopField
-        }
-        else {
-            latestVersionChanges .= "`n" A_LoopField
-        }
-    }
+    ShowCheckForUpdatesDialog(ProductVersion, ATALatestVersionFile, ShowNoUpdatesMsgBox)
     FileDelete, %ATALatestVersionFile%
-
-    if (!IsLatestRelease(ProductVersion, latestVersion)) {
-		MsgBox, 64, %ProgramName% Update Available, % "Your Version: `t" ProductVersion "`nLatest Version: `t" latestVersion . latestVersionChanges
-		IfMsgBox OK
-			Run, %ProductPage%
-    }
-	else {
-        if (ShowNoUpdatesMsgBox) {
-            MsgBox, 64, %ProgramName%, No updates available
-        }
-    }
     
     ; Write the lastrun for CheckForUpdates to file
     Print("Updating " . CheckForUpdatesFilePath)
     file := FileOpen(CheckForUpdatesFilePath, "w")
     file.Write(A_Now)
     file.Close()
-}
-
-
-; -----------------------------------------------------------------------------
-; Check for updates
-; ProgramVersion : Current version of the running application
-; CurrentVersion : Latest version available on net
-; Returns:
-;    True - if ProgramVersion > CurrentVersion
-;   False - otherwise
-; -----------------------------------------------------------------------------
-IsLatestRelease(programVersion, currentVersion) {
-	StringSplit, programVersionArray, programVersion, `.
-	StringSplit, currentVersionArray, currentVersion, `.
-
-	Loop % currentVersionArray0 - programVersionArray0
-    {
-		var := programVersionArray0 + A_index, programVersionArray%var% := 0
-    }
-
-	Loop % currentVersionArray0
-    {
-		if (programVersionArray%A_index% < currentVersionArray%A_index%) {
-			return false
-        }
-		else if (programVersionArray%A_index% > currentVersionArray%A_index%) {
-            ; in case currentVersion supplied is of old file
-			return true
-        }
-    }
-	return true
 }
 
 
@@ -1469,3 +1375,4 @@ PrintProcessDictList(str, lst) {
 
 
 #Include %A_ScriptDir%\Lib\Fnt.ahk
+#Include %A_ScriptDir%\CheckForUpdatesDialog.ahk

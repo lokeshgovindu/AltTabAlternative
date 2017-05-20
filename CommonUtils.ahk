@@ -236,3 +236,47 @@ AutoXYWH(DimSize, cList*)       ; http://ahkscript.org/boards/viewtopic.php?t=10
         }
     }
 }
+
+
+; -----------------------------------------------------------------------------
+; Move the list of buttons to the center of a window
+; Ex for Piped_CtrlvNames: SDOkBtn|SDApplyBtn|SDCancelBtn|SDResetBtn
+; -----------------------------------------------------------------------------
+MoveControlsToHorizontalCenter(Piped_CtrlvNames, Width)
+{
+    ;~ Local minX, minY, maxX, maxY
+    Local minX := 10000, minY := 10000, maxX := 0, maxY := 0
+    ;~ PrintKV("Width", Width)
+    Loop, Parse, Piped_CtrlvNames, |, %A_Space%
+    {
+        ; Get position and size of each control in list.
+        GuiControlGet, Pos, Pos, %A_LoopField%
+        ;~ Print4(PosX, PosY, PosW, PosH)
+        
+        ; Creates PosX, PosY, PosW, PosH
+        if (PosX < minX) { ; Check for minimum X
+            minX := PosX
+        }
+        if (PosY < minY) { ; Check for minimum Y
+            minY := PosY
+        }
+        if (PosX + PosW > maxX) { ;Check for maximum X
+            maxX := PosX + PosW
+        }
+        if (PosY + PosH > maxY) { ;Check for maximum Y
+            maxY := PosY + PosH
+        }
+    }
+    ;~ Print4(minX, minY, maxX, maxY)
+
+    offsetX := (Width - (maxX - minX + 1)) / 2 - minX
+    ;~ PrintKV("offsetX", offsetX)
+    Loop, Parse, Piped_CtrlvNames, |, %A_Space%
+    {
+        ; Get position and size of each control in list.
+        GuiControlGet, Pos, Pos, %A_LoopField%
+        newX := PosX + offsetX
+        ;~ PrintKV2("PosX", PosX, "newX", newX)
+        GuiControl, MoveDraw, %A_LoopField%, x%newX%
+    }	
+}

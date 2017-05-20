@@ -14,6 +14,7 @@ Known Issues
   using Alt+Backtick / Alt+Shift+Backtick.
   Ex | Switch between notepad.exe/notepad++.exe processes using Alt+Backtick if
      | notepad.exe and notepad++.exe are marked as similar processes.
+  Use settings dialog to define similar process groups.
 + Removed system menu for Alt+Tab window.
 + Always Run At Startup when the application starts.
 

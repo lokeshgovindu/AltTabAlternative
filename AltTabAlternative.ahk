@@ -191,12 +191,6 @@ ListviewResizeIcons := 0     ; Resize icons to fit listview area
 IniFileData("Read")
 PrintSettings()
 
-;~ Global SimilarProcessGroupsStr := "notepad++.exe/notepad.exe|chrome.exe/iexplore.exe|explorer.exe/xplorer2_lite.exe/xplorer2.exe/xplorer2_64.exe"
-;~ Global ProcessDictList := GetProcessDictList(SimilarProcessGroupsStr)
-;~ Global ProcessDictListIndex := -1
-
-;~ PrintProcessDictList("ProcessDictList", ProcessDictList)
-
 
 ; Position
 GuiX = Center
