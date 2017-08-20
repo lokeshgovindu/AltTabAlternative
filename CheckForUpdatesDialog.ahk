@@ -14,11 +14,8 @@ o-----------------------------------------------------------------------------o
     ;~ ShowNoUpdatesMsgBox     := true
 	;~ ProductPage 	        := "https://alttabalternative.sourceforge.io/"
 	;~ ATALatestVersionFile	:= "E:\Installers\AltTabAlternative\version.txt"
-	;~ ProductVersion			:= "16.3.0.1"
-	;~ ProductVersion			:= "17.0.0.1"
-	;~ latestVersion			:= "17.0.0.1"
+	;~ ProductVersion			:= "17.2.0.5"
     ;~ ProductLatestURL        := "https://sourceforge.net/projects/alttabalternative/files/latest/download"
-    ;~ ProductLatestURL        := "https://sourceforge.net/projects/sevenzip/files/latest/download"
 	;~ PrintKV("ATALatestVersionFile", ATALatestVersionFile)
     ;~ ShowCheckForUpdatesDialog(ProductVersion, ATALatestVersionFile, ShowNoUpdatesMsgBox)
     ;~ Return
@@ -49,7 +46,7 @@ ShowCheckForUpdatesDialog(ProductVersion, ATALatestVersionFile, ShowNoUpdatesMsg
     
     if (!IsLatestRelease(ProductVersion, latestVersion)) {
         if (ShowNoUpdatesMsgBox) {
-            MsgBox, 64, %ProgramName%, You are using the latest version of %ProgramName%`nVersion: %ProductVersion%
+            MsgBox, 64, %ProgramName%, You are using the latest version of %ProgramName%`n`nProductVersion:`t%ProductVersion%`nLatestVersion:`t%latestVersion%
         }
         Return
     }
@@ -147,20 +144,20 @@ IsLatestRelease(programVersion, currentVersion) {
 	StringSplit, programVersionArray, programVersion, `.
 	StringSplit, currentVersionArray, currentVersion, `.
 
-	Loop % currentVersionArray0 - programVersionArray0
-    {
+	Loop % currentVersionArray0 - programVersionArray0 {
 		var := programVersionArray0 + A_index, programVersionArray%var% := 0
     }
 
-	Loop % currentVersionArray0
-    {
-		if (programVersionArray%A_index% <= currentVersionArray%A_index%) {
-			return false
-        }
-		else if (programVersionArray%A_index% > currentVersionArray%A_index%) {
+	Loop % currentVersionArray0 {
+		if (programVersionArray%A_index% < currentVersionArray%A_index%) {
             ; in case currentVersion supplied is of old file
 			return true
-        }
+        } else if (programVersionArray%A_index% > currentVersionArray%A_index%) {
+			return false
+        } else {
+			continue
+		}
     }
-	return true
+	
+	return false
 }
