@@ -1,0 +1,7 @@
+LIBRARY
+EXPORTS
+	GetRatioA			@1
+	GetPartialRatioA	@2
+	GetRatioW			@3
+	GetPartialRatioW	@4
+
