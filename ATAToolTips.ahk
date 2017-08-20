@@ -101,6 +101,14 @@ SDPromptTerminateAllTooltip =
 Prompts for confirmation before terminating a window/process
 )
 
+SDFuzzyMatchPercentTooltip =
+(
+Fuzzy name match percent between search string and process name/title.
+    100`% means exact match
+     80`% would cause "files" to match "filas"
+     and so on ...
+)
+
 SDWindowTransparencyTooltip =
 (
 Indicates the degree of transparency.

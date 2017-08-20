@@ -14,6 +14,126 @@ o-----------------------------------------------------------------------------o
 #SingleInstance Force
 #InstallKeybdHook
 
+; Generic optimizations
+; Link: https://autohotkey.com/boards/viewtopic.php?t=6413
+/*
+
+1. #NoEnv is recommended for all scripts, it disables environment variables.
+   More info: https://autohotkey.com/docs/commands/_NoEnv.htm
+
+2. The default #MaxHotkeysPerInterval along with #HotkeyInterval will stop your
+   script by showing message boxes if you have some kind of rapid autofire loop
+   in it. Just put some insane unreachable high number to ignore this limit.
+   More info: https://autohotkey.com/docs/commands/_MaxHotkeysPerInterval.htm
+   https://autohotkey.com/docs/commands/_HotkeyInterval.htm
+    
+3. ListLines and #KeyHistory are functions used to "log your keys". Disable
+   them as they're only useful for debugging purposes.
+   More info: https://autohotkey.com/docs/commands/ListLines.htm
+   https://autohotkey.com/docs/commands/KeyHistory.htm
+    
+4. Setting an higher priority to a Windows program is supposed to improve its
+   performance. Use AboveNormal/A. If you feel like it's making things worse,
+   comment or remove this line.
+   In my experience and according to user Ffkwa, using "Realtime" is actually
+   counterproductive (Windows' Task Manager warns you about this instability as
+   well, same for AHK's documentation)
+   https://autohotkey.com/docs/commands/Process.htm
+    
+5. The default SetBatchLines value makes your script sleep 10 milliseconds every
+   line. Make it -1 to not sleep (but remember to include at least one Sleep in
+   your loops, if any!)
+   More info: https://autohotkey.com/docs/commands/SetBatchLines.htm
+    
+6. Even though SendInput ignores SetKeyDelay, SetMouseDelay and
+   SetDefaultMouseSpeed, having these delays at -1 improves SendEvent's speed
+   just in case SendInput is not available and falls back to SendEvent.
+   https://autohotkey.com/docs/commands/Send.htm#SendInputUnavail
+    
+7. SetWinDelay and SetControlDelay may affect performance depending on the script.
+   More info: https://autohotkey.com/docs/misc/Performance.htm
+
+8. SendInput is the fastest send method. SendEvent (the default one) is 2nd
+   place, SendPlay a far 3rd place (it's the most compatible one though).
+   SendInput does not obey to SetKeyDelay, SetMouseDelay, SetDefaultMouseSpeed;
+   there is no delay between keystrokes in that mode.
+   You can test this yourself by benchmarking the 3 methods. Here's a script you
+   can use to do it (read the commented lines for instructions):
+   
+    #NoEnv
+    #SingleInstance Force
+    #MaxHotkeysPerInterval 99000000
+    #HotkeyInterval 99000000
+    #KeyHistory 0
+    ListLines Off
+    Process, Priority, , A
+    SetBatchLines, -1
+    SetKeyDelay, -1, -1
+    SetMouseDelay, -1
+    SetDefaultMouseSpeed, 0
+    SetWinDelay, -1
+    SetControlDelay, -1
+    SendMode Input
+
+    DllCall("QueryPerformanceFrequency", "Int64*", Frequency)
+    StartTime := A_TickCount
+    DllCall("QueryPerformanceCounter", "Int64*", CounterBefore)
+    Loop 10000
+    {
+        SendEvent {Pause} ;run the script 3 times by switching SendEvent to
+        ; SendInput and SendPlay to benchmark the 3 different Send methods.
+        ; to benchmark other kinds of scripts, when the script ends with an If
+        ; variable, you can end the Loop with Continue. When Continue is unusable,
+        ; use Sleep -1 instead.
+    }
+    DllCall("QueryPerformanceCounter", "Int64*", CounterAfter)
+    ElapsedTime := A_TickCount - StartTime
+    MsgBox % "TickCount:`n" ElapsedTime " ms`n`n" "QueryPerformanceCounter:`n" .
+        (CounterAfter - CounterBefore)*1000/Frequency . " ms"
+    
+9. If you're not using any SetTimer, the high precision sleep function is useful
+   when you need millisecond reliability in your scripts. It may be problematic
+   when used with SetTimer in some situations because this sleep method pauses
+   the entire script. To make use of it, here's an example that waits 16,67
+   milliseconds:
+   DllCall("Sleep",UInt,16.67)
+   You can read more about this and alternative sleep functions at RHCP's
+   excellent thread (there are more Sleep methods there, like one that doesn't
+   affect SetTimer's but uses high CPU)
+   http://www.autohotkey.com/board/topic/95789-another-high-resolution-sleep-function/
+   You can read more about the inaccuracy of the default Sleep here:
+   https://autohotkey.com/docs/commands/Sleep.htm and eventually try to benchmark
+   the various Sleeps with the benchmark code at point 8.
+   If you're familiar with RegEx (smart find&replace), you could replace in bulk
+   your default sleeps with high precision ones, like this:
+   SEARCH:Sleep, (\d+)
+   REPLACE:DllCall\("Sleep","UInt",\1\)
+   
+10. When using PixelSearch to scan a single pixel of a single color variation,
+    don't use the Fast parameter. According to my benchmarks, regular PixelSearch
+    is faster than PixelSearch Fast in that case.
+    More information with benchmarks:
+    https://autohotkey.com/boards/viewtopic.php?f=5&t=5920
+    
+11. According to the documentation (this text is found in the setup file), the
+    Unicode x64bit version of AHK is faster, use it when available.
+    
+*/
+
+#NoEnv
+#MaxHotkeysPerInterval 99000000
+#HotkeyInterval 99000000
+#KeyHistory 0
+ListLines Off
+Process, Priority, , A
+SetBatchLines, -1
+SetKeyDelay, -1, -1
+SetMouseDelay, -1
+SetDefaultMouseSpeed, 0
+SetWinDelay, -1
+SetControlDelay, -1
+SendMode, Input
+
 #Include %A_ScriptDir%\VersionInfo.ahk
 #Include %A_ScriptDir%\ATATooltips.ahk
 
@@ -62,13 +182,18 @@ mso-fareast-font-family:"Times New Roman";color:#002060'>%ATAPRODUCTNAME%</span>
 style='mso-bidi-font-weight:normal'><span style='font-size:11.0pt;mso-bidi-font-size:
 12.0pt;font-family:"Calibri",sans-serif;mso-fareast-font-family:"Times New Roman";
 color:#002060'><br>
-<span class=SpellE>FullVersion %ATAPRODUCTFULLVERSION%</span><br>
+<span class=SpellE>ProductVersion %ProductVersion%</span><br>
 %ATACOPYRIGHT%<o:p></o:p><br><a href="mailto:%AuthorEMail%?Subject=AltTabAlternative">
 %AuthorEMail%</a></span></b>
 <hr>
 <b style='mso-bidi-font-weight:normal'>
 <span style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;
-mso-fareast-font-family:"Times New Roman";color:#C00000'>First thanks to God :-)</span></b>
+mso-fareast-font-family:"Times New Roman";color:#C00000'>Thanks to The God :-)</span></b>
+</body>
+</html>
+)
+
+/*
 <br><br>
 <style>
 table {border-spacing: 8px 2px;}
@@ -78,15 +203,13 @@ table {border-spacing: 8px 2px;}
 <tr style='color:#3D113B'><td align="right"><b><a href="https://autohotkey.com/boards/memberlist.php?mode=viewprofile&u=58">jballi</a></b></td><td>: For AddTooltip, Font Library v0.5</td><tr>
 <tr style='color:#778E64'><td align="right"><b>kdoske</b></td><td>: For CSV Library</td><tr>
 <tr style='color:#53A390'><td align="right"><b><a href="http://www.elegantthemes.com/">elegantthemes</a></b></td><td>: Icon design</td><tr>
-<tr style='color:#4C4AA8'><td align="right"><b><a href="https://in.linkedin.com/in/madhu-sameena-05084b38">Madhu Sameena</a></b></td><td>: Suggestions & testing</td><tr>
-<tr style='color:#7D3858'><td align="right"><b><a href="https://in.linkedin.com/in/satish-samayam-077a4a2b">Satish Samayam</a></b></td><td>: Suggestions & testing</td><tr>
 </table>
 <br>
 <span style='font-size:11.0pt;mso-bidi-font-size:12.0pt;font-family:"Calibri",sans-serif;;color:#049308'><b>And Everyone !!!</b></span>
-</body>
-</html>
-)
-
+<tr style='color:#4C4AA8'><td align="right"><b><a href="https://in.linkedin.com/in/madhu-sameena-05084b38">Madhu Sameena</a></b></td><td>: Suggestions & testing</td><tr>
+<tr style='color:#7D3858'><td align="right"><b><a href="https://in.linkedin.com/in/satish-samayam-077a4a2b">Satish Samayam</a></b></td><td>: Suggestions & testing</td><tr>
+<tr style='color:#CC483F'><td align="right"><b><a href="https://github.com/martinariel">Martin Fernandez</a></b></td><td>: FuzzyWuzzy C++ Port</td><tr>
+*/
 SettingsDirPath         := A_AppData . "\" . ProductName
 SettingsINIFileName     := "AltTabAlternativeSettings.ini"
 SettingsINIFilePath     := SettingsDirPath . "\" . SettingsINIFileName
@@ -100,7 +223,7 @@ HiddenWindowsFile_Cols  := 5
 TrayIcon                := "AltTabAlternative.ico"
 ApplicationName         := ProductName
 ProgramName             := ApplicationName
-ReadMeFileName          := "ReadMe.txt"
+ReadMeFileName          := "ReadMe.mht"
 HelpFileName            := "Help.mht"
 ReleaseNotesFileName    := "ReleaseNotes.txt"
 
@@ -136,6 +259,14 @@ ReleaseNotesFileName    := "ReleaseNotes.txt"
 ; AltTabAlternative ContextSensitive Keys
 ;
 ;
+; ********* FuzzyMatchPercent *********
+; Fuzzy name match percent;
+;   100% means exact match, 80% would cause "files" to
+;   match "filas" and so on...
+; This variable will be used to find the partial match ration
+;   between (SearchString, ProcessName), (SearchString, ProcessTitle)
+;
+;
 ; ********* variable *********
 ;
 ;
@@ -167,6 +298,7 @@ Global BacktickFilterWindows        := true
 Global BacktickProcName             := ""
 Global ProcessDictList              := ""
 Global ProcessDictListIndex         := -1
+Global FuzzyMatchPercent            := 100
 
 Global SBPartsCount                 := 3
 Global SBPartPIDPos                 := 3
@@ -176,6 +308,38 @@ Global SBPartInfoPos                := 1
 Global SBPartPIDWidth               := 108
 Global SBPartActiveWindowWidth      := 60
 
+Global UtilsDllName                 := "Utils_x64.dll"
+Global GetPartialRatio_API          := 0
+Global GetClassLong_API         := "GetClassLongPtr"
+
+; -----------------------------------------------------------------------------
+; LoadLibrary & get the function pointers
+; -----------------------------------------------------------------------------
+If (A_PtrSize = 8) {
+    UtilsDllName                := "Utils_x64.dll"
+    GetClassLong_API            := "GetClassLongPtr"
+    GetPartialRatioFnName       := "GetPartialRatioW"
+} else {
+    UtilsDllName                := "Utils_x86.dll"
+    GetClassLong_API            := "GetClassLong"
+    GetPartialRatioFnName       := "GetPartialRatioA"
+}
+
+; Avoids the need for DllCall() in the loop to load the library.
+hUtilsModule := DllCall("LoadLibrary", "Str", UtilsDllName, "Ptr")
+if (!hUtilsModule) {
+	ErrorText := Format("ERROR: Failed to load {1}", UtilsDllName)
+	MsgBox, 0x10, %ProductName%, %ErrorText%, 
+} else {
+    GetPartialRatio_API := DllCall("GetProcAddress", "Ptr", hUtilsModule, "AStr", GetPartialRatioFnName, "Ptr")
+    if (!GetPartialRatio_API) {
+        ErrorText := Format("ERROR: Failed to get the address of an exported function {1} from {2}", GetPartialRatioFnName, UtilsDllName)
+        MsgBox, 0x10, %ProductName%, %ErrorText%, 
+    }
+}
+
+;~ PrintKV("hUtilsModule", hUtilsModule)
+;~ PrintKV("GetPartialRatio_API", GetPartialRatio_API)
 
 ; -----------------------------------------------------------------------------
 ; USER EDITABLE SETTINGS:
@@ -216,14 +380,6 @@ Col_4_Width_Max := 200
 
 ColumnTitleList = #| |Window Title|Process Name
 StringSplit, ColumnTitle, ColumnTitleList,| ; Create list of listview header titles
-
-; -----------------------------------------------------------------------------
-; 
-; -----------------------------------------------------------------------------
-If A_PtrSize = 8
-    GetClassLong_API := "GetClassLongPtr"
-else
-    GetClassLong_API := "GetClassLong"
 
 WS_EX_APPWINDOW = 0x40000   ; Provides a taskbar button
 WS_EX_TOOLWINDOW = 0x80     ; Removes the window from the alt-tab list
@@ -1318,21 +1474,28 @@ DisplayList:
     LV_SetImageList(ImageListID1, 1)    ; Attach the ImageLists to the ListView so that it can later display the icons
     
     WinGet, windowList, list, , , Program Manager   ; gather a list of running programs
+    PrintKV("[DisplayList] windowList", windowList)
+    ;~ PrintListKV("[DisplayList] windowList", windowList)
     Loop, %windowList%
     {
         ;~ PrintKV("[DisplayList] A_Index", A_Index)
         ownerID := windowID := windowList%A_Index%
+        ;~ PrintKV("[DisplayList] windowID", windowID)
 
         Loop {
             ownerID := DecimalToHex(DllCall("GetWindow", "UInt", ownerID, "UInt", GW_OWNER))
         } Until !DecimalToHex(DllCall("GetWindow", "UInt", ownerID, "UInt", GW_OWNER))
         
         ownerID := ownerID ? ownerID : windowID
+        ;~ PrintKV2("[DisplayList] ownerID", ownerID, "windowID", windowID)
         
         If (DecimalToHex(DllCall("GetLastActivePopup", "UInt", ownerID)) = windowID)
         {
             WinGet, windowES, ExStyle, ahk_id %windowID%
             WinGet, ownerES, ExStyle, ahk_id %ownerID%
+            ;~ PrintKV("[DisplayList] ownerES", ownerES)
+            ;~ PrintKV("[DisplayList] windowES", windowES)
+            ;~ PrintKV2("[DisplayList] ownerES", ownerES, "windowES", windowES)
 
             isAltTabWindow := false
             if (ownerES && !((ownerES & WS_EX_TOOLWINDOW) && !(ownerES & WS_EX_APPWINDOW)) && !IsInvisibleWin10BackgroundAppWindow(ownerID)) {
@@ -1400,8 +1563,44 @@ DisplayList:
                 
                 ;~ FileAppend, A_Index = [%A_Index%] title = [%title%]`, processName = [%procName%]`n, *
                 ;~ Print("CurSearchString = " . CurSearchString)
-                If (InStr(title, CurSearchString, false) != 0 or InStr(procName, CurSearchString, false) != 0)
-                {
+                
+                SearchStringFound := false
+                matchRatio := 0.0
+                
+                ; First search the search string in title and process name, if not found
+                ;   use the fuzzy string match percent algorithm.
+                SearchStringFound := InStr(title, CurSearchString, false) != 0 or InStr(procName, CurSearchString, false) != 0
+                
+                ; Do NOT use fuzzy string similarity if FuzzyMatchPercent is 100%.
+                
+                if (FuzzyMatchPercent != 100.0) {
+                    ; First search in process name
+                    if (SearchStringFound == false) {
+                        ; Get the partial matching ratio                    
+                        matchRatio := DllCall(GetPartialRatio_API, "WStr", CurSearchString, "WStr", procName, "cdecl Double")
+                        if (matchRatio >= FuzzyMatchPercent) {
+                            SearchStringFound := true
+                        }
+                    }
+
+                    ; Next search in process title
+                    if (SearchStringFound == false) {
+                        ; Get the partial matching ratio
+                        ;~ DllCall("QueryPerformanceCounter", "Int64*", StartTime)
+                        matchRatio := DllCall(GetPartialRatio_API, "WStr", CurSearchString, "WStr", title, "cdecl Double")
+                        ;~ DllCall("QueryPerformanceCounter", "Int64*", EndTime)
+                        ;~ DllCall("QueryPerformanceFrequency", "Int64*", Frequency)
+                        ;~ ElapsedTime := (EndTime - StartTime) / Frequency
+                        ;~ PrintKV2("matchRatio", matchRatio, "ElapsedTime", ElapsedTime)
+                        ;~ Sleep, 100
+                        ;~ PrintKV2("matchRatio", matchRatio, "title", title)
+                        if (matchRatio >= FuzzyMatchPercent) {
+                            SearchStringFound := true
+                        }
+                    }
+                }
+            
+                If (SearchStringFound) {
                     Window_Found_Count += 1
                     if (ownerES) {
                         ;~ Print("***************************** Getting icon from OwnerID *****************************")
@@ -2382,9 +2581,12 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
     Global BacktickProcName
     Global ProcessDictListIndex
     Global ProcessDictList
+    Global GetPartialRatio_API
+    Global FuzzyMatchPercent
     windowList =
     windowFoundCount := 0
     
+    ;~ PrintSub("GetWindowsCount")
     ;~ PrintKV2("[GetWindowsCount] ProcessDictListIndex", ProcessDictListIndex, "BacktickProcName", BacktickProcName)
     
     DetectHiddenWindows, Off ; makes DllCall("IsWindowVisible") unnecessary
@@ -2454,20 +2656,38 @@ GetWindowsCount(SearchString:="", SearchInTitle:=true, SearchInProcName:=true) {
                 
                 ;~ FileAppend, A_Index = [%A_Index%] title = [%title%]`, processName = [%procName%]`n, *
                 ;~ Print("SearchString = " . SearchString)
+                
                 ok := false
                 if (SearchString = "") {
                     ok := true
-                } else if (SearchInTitle and SearchInProcName) {
-                    if (InStr(title, SearchString, false) != 0 or InStr(procName, SearchString, false) != 0) {
-                        ok := true
+                }
+
+                if (!ok) {
+                    ok := InStr(title, SearchString, false) != 0 or InStr(procName, SearchString, false) != 0
+                }
+
+                if (FuzzyMatchPercent != 100.0) {
+                    ; First search in process name
+                    if (!ok) {
+                        ; Get the partial matching ratio
+                        matchRatio := DllCall(GetPartialRatio_API, "WStr", SearchString, "WStr", procName, "cdecl Double")
+                        if (matchRatio >= FuzzyMatchPercent) {
+                            ok := true
+                        }
                     }
-                } else if (SearchInTitle) {
-                    if (InStr(title, SearchString, false) != 0) {
-                        ok := true
-                    }
-                } else if (SearchInProcName) {
-                    if (InStr(procName, SearchString, false) != 0) {
-                        ok := true
+                    
+                    if (!ok) {
+                        ; Get the partial matching ratio
+                        ;~ DllCall("QueryPerformanceCounter", "Int64*", StartTime)
+                        ;~ matchRatio := DllCall("Utils\GetPartialRatioW", "WStr", SearchString, "WStr", title, "cdecl Double")
+                        matchRatio := DllCall(GetPartialRatio_API, "WStr", SearchString, "WStr", title, "cdecl Double")
+                        ;~ DllCall("QueryPerformanceCounter", "Int64*", EndTime)
+                        ;~ DllCall("QueryPerformanceFrequency", "Int64*", Frequency)
+                        ;~ ElapsedTime := (EndTime - StartTime) / Frequency
+                        ;~ PrintKV3("[GetWindowsCount] matchRatio", matchRatio, "ElapsedTime", ElapsedTime, "title", title)
+                        if (matchRatio >= FuzzyMatchPercent) {
+                            ok := true
+                        }
                     }
                 }
                 

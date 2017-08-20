@@ -8,6 +8,15 @@ Known Issues
 - Available @ https://sourceforge.net/p/alttabalternative/tickets/
 
 
+2017.3 new features and bug fixes
+---------------------------------
++ Used fuzzy string matching algorithm to search the search string in the
+  process name / title and gives the degree of similarity how similar search
+  string and process name/title.
+  Ex | 100 % means exact match
+     |  80 % would cause "files" to match "filas" and so on ...
+  Note: Set the fuzzy string matching percent in the settings dialog.
+
 2017.2 new features and bug fixes
 ---------------------------------
 + Can specify group of similar applications to switch between these windows

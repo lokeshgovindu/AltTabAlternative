@@ -103,14 +103,17 @@ PrintWindowsInfoList(str, dict) {
 }
 
 PrintLabel() {
+    Print("")
 	PrintSub(A_ThisLabel)
 }
 
 PrintSub(name) {
+    Print("")
 	Print("[Sub] --- " . name . " ---")
 }
 
 PrintFunc(name) {
+    Print("")
 	Print("[Fun] --- " . name . " ---")
 }
 

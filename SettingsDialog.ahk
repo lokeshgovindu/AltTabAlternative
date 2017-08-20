@@ -220,13 +220,20 @@ ShowSettingsDialog()
     ; -----------------------------------------------------------------------------
     ; General Settings Group
     ; -----------------------------------------------------------------------------
-    Gui, Add, GroupBox, xm Section vGeneralGroupBox W531 H153 cBlue, General
+    Gui, Add, GroupBox, xm Section vGeneralGroupBox W531 H177 cBlue, General
     ; -----------------------------------------------------------------------------
     Gui, Add, Checkbox, xs+5 ys+20 vSDShowStatusBarCheckBox hwndhSDShowStatusBarCheckBox gSDShowStatusBarCheckBoxHandler Checked%ShowStatusBar%, &Show StatusBar
     AddTooltip(hSDShowStatusBarCheckBox, SDShowStatusBarTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Checkbox, xs+5 y+6 vSDPromptTerminateAllCheckBox hwndhSDPromptTerminateAllCheckBox gSDPromptTerminateAllCheckBoxHandler Checked%PromptTerminateAll%, &PromptTerminateAll
     AddTooltip(hSDPromptTerminateAllCheckBox, SDPromptTerminateAllTooltip)
+    ; -----------------------------------------------------------------------------
+    Gui, Add, Text, xs+5 y+9 hwndhSDFuzzyMatchPercentText gDoNothing, &Fuzzy string match percent
+    Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48 hwndhSDFuzzyMatchPercentEdit
+    Gui, Add, UpDown, vSDFuzzyMatchPercentUpDown hwndhSDFuzzyMatchPercentUpDown gSDFuzzyMatchPercentUpDownHandler Range25-100, %FuzzyMatchPercent%
+    AddTooltip(hSDFuzzyMatchPercentText,   SDFuzzyMatchPercentTooltip)
+    AddTooltip(hSDFuzzyMatchPercentEdit,   SDFuzzyMatchPercentTooltip)
+    AddTooltip(hSDFuzzyMatchPercentUpDown, SDFuzzyMatchPercentTooltip)
     ; -----------------------------------------------------------------------------
     Gui, Add, Text, xs+5 y+6 hwndhSDWindowTransparencyText gDoNothing, Window &Transparency
     Gui, Add, Edit, xs+%ColumnOffset% yp-4 w48 hwndhSDWindowTransparencyEdit
@@ -345,6 +352,7 @@ ApplySettings:
     
     GuiControlGet, PromptTerminateAll, , SDPromptTerminateAllCheckBox
     GuiControlGet, ShowStatusBar, , SDShowStatusBarCheckBox
+    GuiControlGet, FuzzyMatchPercent, , SDFuzzyMatchPercentUpDown
     GuiControlGet, WindowTransparency, , SDWindowTransparencyUpDown
     GuiControlGet, WindowWidthPercentage, , SDWindowWidthPercentageUpDown
     GuiControlGet, WindowHeightMaxPercentage, , SDWindowHeightMaxPercentageUpDown
@@ -604,6 +612,15 @@ Return
 
 
 ; -----------------------------------------------------------------------------
+; FuzzyMatchPercent UpDown Handler
+; -----------------------------------------------------------------------------
+SDFuzzyMatchPercentUpDownHandler:
+    GuiControlGet, tSDFuzzyMatchPercent, , SDFuzzyMatchPercentUpDown
+    CheckSettingsModified()
+Return
+
+
+; -----------------------------------------------------------------------------
 ; WindowTransparency UpDown Handler
 ; -----------------------------------------------------------------------------
 SDWindowTransparencyUpDownHandler:
@@ -684,6 +701,7 @@ IsSettingsModified() {
         or tSDSimilarProcessGroupsStr     != SimilarProcessGroupsStr
         or tSDShowStatusBar               != ShowStatusBar
         or tSDPromptTerminateAll          != PromptTerminateAll
+        or tSDFuzzyMatchPercent           != FuzzyMatchPercent
         or tSDWindowTransparency          != WindowTransparency
         or tSDWindowWidthPercentage       != WindowWidthPercentage
         or tSDWindowHeightMaxPercentage   != WindowHeightMaxPercentage
@@ -809,6 +827,7 @@ SimilarProcessGroups=%SimilarProcessGroupsStrDefault%
 [General]
 ShowStatusBar=%ShowStatusBarDefault%
 PromptTerminateAll=%PromptTerminateAllDefault%
+FuzzyMatchPercent=%FuzzyMatchPercentDefault%
 WindowTransparency=%WindowTransparencyDefault%
 WindowWidthPercentage=%WindowWidthPercentageDefault%
 WindowHeightMaxPercentage=%WindowHeightMaxPercentageDefault%
@@ -869,6 +888,7 @@ IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
         ReadVariable("SimilarProcessGroupsStr",     SettingsINIFilePathIn, "Backtick",     "SimilarProcessGroups",      SimilarProcessGroupsStrDefault)
         ReadVariable("ShowStatusBar",      	        SettingsINIFilePathIn, "General",      "ShowStatusBar",             ShowStatusBarDefault)
         ReadVariable("PromptTerminateAll",      	SettingsINIFilePathIn, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
+        ReadVariable("FuzzyMatchPercent",      	    SettingsINIFilePathIn, "General",      "FuzzyMatchPercent",         FuzzyMatchPercentDefault)
         ReadVariable("WindowTransparency",      	SettingsINIFilePathIn, "General",      "WindowTransparency",        WindowTransparencyDefault)
         ReadVariable("WindowWidthPercentage",   	SettingsINIFilePathIn, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
         ReadVariable("WindowHeightMaxPercentage",   SettingsINIFilePathIn, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
@@ -899,6 +919,7 @@ IniFileDataNew(SettingsINIFilePathIn, ReadOrWrite)
         WriteVariable(SimilarProcessGroupsStr,      SettingsINIFilePathIn, "Backtick",     "SimilarProcessGroups",      SimilarProcessGroupsStrDefault)
         WriteVariable(ShowStatusBar,                SettingsINIFilePathIn, "General",      "ShowStatusBar",             ShowStatusBarDefault)
         WriteVariable(PromptTerminateAll,           SettingsINIFilePathIn, "General",      "PromptTerminateAll",        PromptTerminateAllDefault)
+        WriteVariable(FuzzyMatchPercent,            SettingsINIFilePathIn, "General",      "FuzzyMatchPercent",         FuzzyMatchPercentDefault)
         WriteVariable(WindowTransparency,           SettingsINIFilePathIn, "General",      "WindowTransparency",        WindowTransparencyDefault)
         WriteVariable(WindowWidthPercentage,        SettingsINIFilePathIn, "General",      "WindowWidthPercentage",     WindowWidthPercentageDefault)
         WriteVariable(WindowHeightMaxPercentage,    SettingsINIFilePathIn, "General",      "WindowHeightMaxPercentage", WindowHeightMaxPercentageDefault)
@@ -1027,6 +1048,7 @@ PrintSettings() {
     PrintProcessDictList("ProcessDictList", ProcessDictList)    
     PrintKV("ShowStatusBar", ShowStatusBar)
     PrintKV("PromptTerminateAll", PromptTerminateAll)
+    PrintKV("FuzzyMatchPercent", FuzzyMatchPercent)
     PrintKV("WindowTransparency", WindowTransparency)
     PrintKV("WindowWidthPercentage", WindowWidthPercentage)
     PrintKV("WindowHeightMaxPercentage", WindowHeightMaxPercentage)
@@ -1054,6 +1076,7 @@ PrintDefaultSettings() {
     PrintKV("SimilarProcessGroupsStrDefault", SimilarProcessGroupsStrDefault)
     PrintKV("ShowStatusBarDefault", ShowStatusBarDefault)
     PrintKV("PromptTerminateAllDefault", PromptTerminateAllDefault)
+    PrintKV("FuzzyMatchPercentDefault", FuzzyMatchPercentDefault)
     PrintKV("WindowTransparencyDefault", WindowTransparencyDefault)
     PrintKV("WindowWidthPercentageDefault", WindowWidthPercentageDefault)
     PrintKV("WindowHeightMaxPercentageDefault", WindowHeightMaxPercentageDefault)
@@ -1120,6 +1143,7 @@ StoreSettingsInTempVariables() {
     tSDSimilarProcessGroupsStr      := SimilarProcessGroupsStr
     tSDShowStatusBar                := ShowStatusBar
     tSDPromptTerminateAll           := PromptTerminateAll
+    tSDFuzzyMatchPercent            := FuzzyMatchPercent
     tSDWindowTransparency           := WindowTransparency
     tSDWindowWidthPercentage        := WindowWidthPercentage
     tSDWindowHeightMaxPercentage    := WindowHeightMaxPercentage
@@ -1148,6 +1172,7 @@ DefineDefaultSettings() {
     SimilarProcessGroupsStrDefault      := "notepad.exe/notepad++.exe|iexplore.exe/chrome.exe/firefox.exe|explorer.exe/xplorer2_lite.exe/xplorer2.exe/xplorer2_64.exe"
     ShowStatusBarDefault                := false
     PromptTerminateAllDefault           := true
+    FuzzyMatchPercentDefault            := 60
     WindowTransparencyDefault           := 222
     WindowWidthPercentageDefault        := 45
     WindowHeightMaxPercentageDefault    := 50
