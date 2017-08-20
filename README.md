@@ -9,3 +9,5 @@ Hide / Un-hide windows.
 * Provided configuration/setting INI file & UI to change font style, background color, window transparency, width and maximum height.
 * Status bar for additional information.
 
+## Screenshots
+Screenshot-1: ([full size](http://2.bp.blogspot.com/-ioY8ST0kg5s/V5oZmBqdTlI/AAAAAAAAJJ8/oLBX7QtaPwgsqFdjXz_4AvJIuSU-eP-QQCK4B/s1600/1.png))
