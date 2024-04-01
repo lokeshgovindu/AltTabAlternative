@@ -1,3 +1,8 @@
+
+----
+**_Archived this repository, please check out this repo https://github.com/lokeshgovindu/AltTab for the successor._**
+
+----
 ![GitHub Downloads][gh-downloads]
 
 # AltTabAlternative
